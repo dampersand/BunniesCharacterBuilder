@@ -3,6 +3,11 @@
 
 #include "BaseStats.h"
 
-baseStats bigFour;
+class Engine
+{
+public:
+	baseStats bigFour;
+	int buttonRouter(WPARAM wParam);
+};
 
 #endif //__ENGINE_H guard word

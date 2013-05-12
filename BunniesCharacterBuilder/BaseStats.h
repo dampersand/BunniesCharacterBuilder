@@ -12,12 +12,14 @@ struct oneStat
 	std::wstring label; //label of stat
 	int x; //location of statbox
 	int y;
+	HWND hwnd, addButton, subtractButton; //hwnd = handle to the display box.
 };
 
 struct statList
 	{
 		oneStat Strength, Intelligence, Dexterity, Health;
 	};
+
 
 
 class baseStats
@@ -35,7 +37,9 @@ public:
 	int getStatInt(statWord stat);
 	LPCWSTR getStatString(statWord stat);
 
-	void createBoxes(int x, int y, int height, HWND hwnd);
+	void createBoxes(HWND hwnd);
+	void createButtons(HWND hwnd);
+	void createOneButton(statWord stat, HWND hwnd, buttonID idUp, buttonID idDown); //cheap way to do this, but having trouble with my #defines
 
 	void baseStats::paintAll(HDC hdc);
 	void paintText(statWord stat, HDC hdc);
@@ -43,6 +47,8 @@ public:
 	oneStat* translateStatWord(statWord stat); //gets a pointer to the stat asked for by statWord
 
 	void callError(std::wstring function);
+
+	void engineReceiver(WORD identifier);
 
 };
 

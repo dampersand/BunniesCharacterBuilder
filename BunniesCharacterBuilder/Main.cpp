@@ -17,7 +17,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	MainWindow win; //declare a window object.
 
 	//create and register window "win"
-	if (!win.Create(L"Learn to Program Windows", WS_OVERLAPPEDWINDOW)) //have the window create itself.  If it breaks, return.
+	if (!win.Create(L"Bunnies and Burrows Character Creator", WS_OVERLAPPEDWINDOW)) //have the window create itself.  If it breaks, return.
 		return 0;
 
 	ShowWindow(win.Window(), nCmdShow); //show the window.
