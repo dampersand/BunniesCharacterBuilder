@@ -149,8 +149,9 @@ void generalInfo::toggleCommit()
 void generalInfo::commitStat(genStat* stat)
 {
 	int length = GetWindowTextLengthW(stat->hwnd);
-	LPWSTR string = NULL;
-	GetWindowTextW(stat->hwnd, string, length);
+	std::wstring string = L"test";
+	string.resize(length);
+	GetWindowTextW(stat->hwnd, (LPWSTR)string.c_str(), length+1); //GetWindowText doesn't understand "Length," or GetWindowTextLength doesn't understand how to work.
 	stat->string = string;
-	stat->amount = _wtoi(stat->string.c_str());
+	stat->amount = _wtoi(stat->string.c_str()); //TODO: test this
 }
