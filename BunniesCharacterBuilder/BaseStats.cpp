@@ -9,14 +9,14 @@ baseStats::baseStats() //constructor
 	stats.Intelligence.amount = 0;
 	stats.Dexterity.amount = 0;
 	stats.Health.amount = 0;
-	stats.Strength.x = INITIALDISTANCE + TAB;
-	stats.Strength.y = INITIALDISTANCE;
-	stats.Intelligence.x = INITIALDISTANCE + TAB;
-	stats.Intelligence.y = INITIALDISTANCE+BOXHEIGHT+YSPACING;
-	stats.Dexterity.x = INITIALDISTANCE + TAB;
-	stats.Dexterity.y = INITIALDISTANCE+2*BOXHEIGHT+2*YSPACING;
-	stats.Health.x = INITIALDISTANCE + TAB;
-	stats.Health.y = INITIALDISTANCE+3*BOXHEIGHT+3*YSPACING;
+	stats.Strength.x = 0;
+	stats.Strength.y = 0;
+	stats.Intelligence.x = 0;
+	stats.Intelligence.y = 0;
+	stats.Dexterity.x = 0;
+	stats.Dexterity.y = 0;
+	stats.Health.x = 0;
+	stats.Health.y = 0;
 	stats.Strength.label = L"Strength";
 	stats.Dexterity.label = L"Dexterity";
 	stats.Intelligence.label = L"Intelligence";
@@ -38,6 +38,9 @@ baseStats::baseStats() //constructor
 	_itow_s(stats.Intelligence.amount,stats.Intelligence.string,10);
 	_itow_s(stats.Dexterity.amount,stats.Dexterity.string,10);
 	_itow_s(stats.Health.amount, stats.Health.string, 10);
+
+	xSize = 0;
+	ySize = 0;
 }
 
 
@@ -87,15 +90,37 @@ int baseStats::changeStat(statWord stat, int amount, int modifier) //returns -1 
 	return baseStats::changeStat(stat, amount*modifier);
 }
 
-void baseStats::createBoxes(HWND hwnd)
+int baseStats::getXSize()
 {
+	return xSize;
+}
+
+int baseStats::getYSize()
+{
+	return ySize;
+}
+
+void baseStats::createBoxes(HWND hwnd, int x, int y)
+{
+	stats.Strength.x = x + TAB;
+	stats.Strength.y = y;
+	stats.Intelligence.x = x + TAB;
+	stats.Intelligence.y = y+BOXHEIGHT+YSPACING;
+	stats.Dexterity.x = x + TAB;
+	stats.Dexterity.y = y+2*BOXHEIGHT+2*YSPACING;
+	stats.Health.x = x + TAB;
+	stats.Health.y = y+3*BOXHEIGHT+3*YSPACING;
+	xSize = stats.Strength.x + BOXLENGTH;
+	ySize = stats.Health.y;
 	stats.Strength.hwnd = CreateWindow(TEXT("EDIT"), stats.Strength.string, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, stats.Strength.x, stats.Strength.y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
 	stats.Intelligence.hwnd = CreateWindow(TEXT("EDIT"), stats.Intelligence.string, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, stats.Intelligence.x, stats.Intelligence.y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
 	stats.Dexterity.hwnd = CreateWindow(TEXT("EDIT"), stats.Dexterity.string, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, stats.Dexterity.x, stats.Dexterity.y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
 	stats.Health.hwnd = CreateWindow(TEXT("EDIT"), stats.Health.string, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, stats.Health.x, stats.Health.y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
+	xSize += xSize + XSPACINGLONG;
+	ySize += ySize + YSPACING;
 }
 
-void baseStats::createButtons(HWND hwnd)
+void baseStats::createButtons(HWND hwnd, int x, int y)
 {
 	createOneButton(ST, hwnd, ID_ST_ADD, ID_ST_SUB);
 	createOneButton(IQ, hwnd, ID_IQ_ADD, ID_IQ_SUB);

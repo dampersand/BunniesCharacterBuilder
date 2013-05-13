@@ -37,4 +37,7 @@ typedef unsigned int buttonID;
 #define ID_DX_SUB 303
 #define ID_HT_SUB 304
 
+//utility button IDs
+#define ID_TOGGLE_COMMIT 401
+
 #endif //_STAT_DEFINITIONS_H guard word

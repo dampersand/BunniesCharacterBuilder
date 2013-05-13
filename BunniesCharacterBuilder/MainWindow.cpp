@@ -9,8 +9,8 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch (uMsg)
     {
 	case WM_CREATE:
-		engine.bigFour.createBoxes(m_hwnd);
-		engine.bigFour.createButtons(m_hwnd);
+		engine.initializeGeneral(m_hwnd);
+		engine.initializeBase(m_hwnd);
 		return 0;
 
     case WM_DESTROY:
@@ -22,7 +22,8 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(m_hwnd, &ps);
 			FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
-			engine.bigFour.paintAll(hdc);
+			engine.paintBase(hdc);
+			engine.paintGeneral(hdc);
 			EndPaint(m_hwnd, &ps);
 		}
         return 0;

@@ -26,29 +26,30 @@ class baseStats
 {
 private:
 	statList stats;
+	int xSize, ySize;
+
+	void createOneButton(statWord stat, HWND hwnd, buttonID idUp, buttonID idDown); //cheap way to do this, but having trouble with my #defines
+	void paintText(statWord stat, HDC hdc); //helper function to paint a label
+	oneStat* translateStatWord(statWord stat); //gets a pointer to the stat asked for by statWord
+	void callError(std::wstring function); //utility function to alert the user.  Or programmer.  Whoever.
 
 public:
 	baseStats(); //constructor
 
-	/*member functions*/
+	/*engine member functions*/
 	int changeStat(statWord stat, int amount);
 	int changeStat(statWord stat, int amount, int modifier);
-
 	int getStatInt(statWord stat);
 	LPCWSTR getStatString(statWord stat);
-
-	void createBoxes(HWND hwnd);
-	void createButtons(HWND hwnd);
-	void createOneButton(statWord stat, HWND hwnd, buttonID idUp, buttonID idDown); //cheap way to do this, but having trouble with my #defines
-
-	void baseStats::paintAll(HDC hdc);
-	void paintText(statWord stat, HDC hdc);
-
-	oneStat* translateStatWord(statWord stat); //gets a pointer to the stat asked for by statWord
-
-	void callError(std::wstring function);
-
 	void engineReceiver(WORD identifier);
+	int getXSize();
+	int getYSize();
+
+	/*UI member functions*/
+	void createBoxes(HWND hwnd, int x, int y); //receive parent and starting point
+	void createButtons(HWND hwnd, int x, int y);
+	void paintAll(HDC hdc);
+
 
 };
 
