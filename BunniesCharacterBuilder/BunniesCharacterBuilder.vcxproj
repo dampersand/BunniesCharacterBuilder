@@ -79,6 +79,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BaseStats.h" />
+    <ClInclude Include="DerivedStats.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="General.h" />
     <ClInclude Include="MainWindow.h" />
@@ -88,6 +89,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseStats.cpp" />
+    <ClCompile Include="DerivedStats.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="General.cpp" />
     <ClCompile Include="Main.cpp" />

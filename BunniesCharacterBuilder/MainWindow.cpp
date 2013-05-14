@@ -11,6 +11,7 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		engine.initializeGeneral(m_hwnd);
 		engine.initializeBase(m_hwnd);
+		engine.initializeDerived(m_hwnd);
 		return 0;
 
     case WM_DESTROY:
@@ -24,6 +25,7 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
 			engine.paintBase(hdc);
 			engine.paintGeneral(hdc);
+			engine.paintDerived(hdc);
 			EndPaint(m_hwnd, &ps);
 		}
         return 0;

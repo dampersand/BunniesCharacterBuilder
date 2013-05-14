@@ -3,22 +3,29 @@
 
 #include "BaseStats.h"
 #include "General.h"
+#include "DerivedStats.h"
+
 
 class Engine
 {
 	baseStats bigFour;
 	generalInfo general;
+	derived derivedStats;
+	messengerData data;
 
-	int generalXStart, generalYStart, bigFourXStart, bigFourYStart;
+	int generalXStart, generalYStart, bigFourXStart, bigFourYStart, derivedStatsXStart, derivedStatsYStart;
 
 public:
 	Engine();
 
 	int buttonRouter(WPARAM wParam);
+
 	void initializeGeneral(HWND hwnd);
 	void initializeBase(HWND hwnd);
+	void initializeDerived(HWND hwnd);
 	void paintBase(HDC hdc);
 	void paintGeneral(HDC hdc);
+	void paintDerived(HDC hdc);
 };
 
 #endif //__ENGINE_H guard word
