@@ -35,11 +35,11 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch(HIWORD(wParam))
 			{
 			case BN_CLICKED:
-				engine.buttonRouter(wParam);
+				engine.buttonRouter(wParam); //current location in edit
 				break;
 
 			default:
-				//handle an error, unknown command
+				//TODO handle an error, unknown command
 				break;
 			}
 		}

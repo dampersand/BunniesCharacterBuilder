@@ -6,53 +6,43 @@
 #include "StatDefinitions.h"
 #include <windowsx.h>
 
-struct oneStat: public bunnyStat
-{
-	HWND addButton, subtractButton; //hwnd = handle to the buttons.
-};
-
-struct statList
-	{
-		oneStat Strength, Intelligence, Dexterity, Health;
-	};
-
-
 
 class baseStats
 {
 private:
-	statList stats;
+	messengerData* statList;
 	int xSize, ySize;
+	int xStart, yStart;
 	HWND disableButton;
-	bool committed;
-	bool disabled;
+	bool committed, disabled;
 
 	void createOneButton(statWord stat, HWND hwnd, buttonID idUp, buttonID idDown); //cheap way to do this, but having trouble with my #defines
 	void createToggleButton(HWND hwnd, int x, int y);
 	void toggleCommit();
 	void toggleDisable(bool dependency);
 	void paintText(statWord stat, HDC hdc); //helper function to paint a label
-	oneStat* translateStatWord(statWord stat); //gets a pointer to the stat asked for by statWord
 	void callError(std::wstring function); //utility function to alert the user.  Or programmer.  Whoever.
 	int getPointChange(int initialStat, int direction);
+	void setStatButtonState(statWord stat, bool state);
 
 public:
-	baseStats(); //constructor
+	baseStats(messengerData &data); //constructor
 
 	/*engine member functions*/
 	int changeStat(statWord stat, int amount);
 	int changeStat(statWord stat, int amount, int modifier);
-	int getStatInt(statWord stat);
-	LPCWSTR getStatString(statWord stat);
-	void engineReceiver(WORD identifier, messengerData &data, bool dependency); //if dependency is false, user has not locked all predecessors first, or has a dependent open.
-	int getXSize();
-	int getYSize();
+	void engineReceiver(WORD identifier, bool dependency); //if dependency is false, user has not locked all predecessors first, or has a dependent open.
 	bool isCommitted();
 
 	/*UI member functions*/
-	void createBoxes(HWND hwnd, int x, int y); //receive parent and starting point
+	void createBoxes(HWND hwnd); //receive parent and starting point
 	void createButtons(HWND hwnd);
 	void paintAll(HDC hdc);
+	int getYSize();
+	int getXSize();
+	void setStart(int x, int y);
+	int getXStart();
+	int getYStart();
 
 
 };

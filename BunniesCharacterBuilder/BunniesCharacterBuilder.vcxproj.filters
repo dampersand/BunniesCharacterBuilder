@@ -59,5 +59,8 @@
     <ClCompile Include="DerivedStats.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="StatDefinitions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,32 +1,25 @@
 #include "General.h"
 #include <stdlib.h>
 
-generalInfo::generalInfo() //constructor
+generalInfo::generalInfo(messengerData &data) //constructor
 {
-	statInitiator(&age, L"Age", 0, 0, 12);
-	statInitiator(&points, L"Points", 0, 0, 100);
-	statInitiator(&name, L"Name", 0, 0, 0);
+	statList = &data;
+	statList->makeNewStat(AG, 12, 0, 0, L"Age", L"0", 0, 0, 0);
+	statList->makeNewStat(PT, 100, 0, 0, L"Points", L"100", 0, 0, 0);
+	statList->makeNewStat(NM, 0, 0, 0, L"Name", L"", 0, 0, 0);
 	disableButton = NULL;
 	committed = FALSE;
 	disabled = FALSE;
 
 	xSize = 0;
 	ySize = 0;
-}
-
-void generalInfo::statInitiator(bunnyStat* stat, std::wstring lab, int X, int Y, int am)
-{
-	stat->amount = am;
-	stat->label = lab;
-	stat->x = X;
-	stat->y = Y;
-	stat->hwnd = 0;
-	stat->string = std::to_wstring(stat->amount);
+	xStart = 0;
+	yStart = 0;
 }
 
 int generalInfo::getStat(statWord stat)
 {
-	bunnyStat* answer = translateStatWord(stat);
+	bunnyStat* answer = statList->getStat(stat);
 	if (stat == NM)
 		return -1; //consider handling an error
 	return answer->amount;
@@ -34,7 +27,10 @@ int generalInfo::getStat(statWord stat)
 
 int generalInfo::addStat(statWord stat, int newStat)
 {
-	bunnyStat* answer = translateStatWord(stat);
+	bunnyStat* answer = statList->getStat(stat);
+
+	if (answer->identifier == EMPTY)
+		callError(L"Empty pointer at generalInfo::addStat");
 
 	answer->amount += newStat;
 
@@ -46,29 +42,41 @@ int generalInfo::addStat(statWord stat, int newStat)
 	}
 
 	answer->string = std::to_wstring(answer->amount);
-	SendMessage(answer->hwnd,WM_SETTEXT,FALSE,(LPARAM) answer->string.c_str());
+	answer->updateStat();
 
 	return 0;
 }
 
-void generalInfo::createBoxes(HWND hwnd, int x, int y)
+void generalInfo::createBoxes(HWND hwnd)
 {
-	name.x = x + TAB;
-	name.y = y;
-	age.x = x + TAB;
-	age.y = name.y + BOXHEIGHT + YSPACING;
-	points.x = x + TAB;
-	points.y = age.y + BOXHEIGHT + YSPACING;
+	int x = xStart;
+	int y = yStart;
+	bunnyStat *name, *age, *points;
+	name = statList->getStat(NM);
+	age = statList->getStat(AG);
+	points = statList->getStat(PT);
+		
+		
+	name->x= x + TAB;
+	name->y = y;
+	age->x = x + TAB;
+	age->y = name->y + BOXHEIGHT + YSPACING;
+	points->x = x + TAB;
+	points->y = age->y + BOXHEIGHT + YSPACING;
 
-	createBoxText(hwnd, &name, 2*TAB);
-	createBox(hwnd, &age, BOXLENGTH);
-	createBox(hwnd, &points, 1.5*BOXLENGTH);
+	createBoxText(hwnd, name, 2*TAB);
+	createBox(hwnd, age, BOXLENGTH);
+	createBox(hwnd, points, 1.5*BOXLENGTH);
 
-	xSize = name.x + 2*TAB;
-	ySize += points.y + BOXHEIGHT;
+	xSize = name->x + 2*TAB;
+	ySize += points->y + BOXHEIGHT;
 	ySize += YSPACING;
 
-	createButton(hwnd, xSize, max(max(points.y,age.y),name.y));
+	statList->editStat(name);
+	statList->editStat(points);
+	statList->editStat(age);
+
+	createButton(hwnd, xSize, max(max(points->y,age->y),name->y));
 }
 
 void generalInfo::createBoxText(HWND hwnd, bunnyStat* stat, int length)
@@ -93,21 +101,23 @@ void generalInfo::callError(std::wstring function)
 
 void generalInfo::paintAll(HDC hdc)
 {
-	paintText(&age, hdc);
-	paintText(&points, hdc);
-	paintText(&name, hdc);
+	paintText(AG, hdc);
+	paintText(PT, hdc);
+	paintText(NM, hdc);
 }
 
-void generalInfo::paintText(bunnyStat* stat, HDC hdc)
+void generalInfo::paintText(statWord stat, HDC hdc)
 {
-	if (!stat)
+	bunnyStat* answer = statList->getStat(stat);
+
+	if (answer->identifier == EMPTY)
 	{
 		callError(L"Empty pointer at generalInfo::paintText");
 		return;
 	}
 	SetTextAlign(hdc, TA_RIGHT);
 
-	TextOut (hdc, stat->x - XSPACINGSHORT, stat->y, stat->label.c_str(), stat->label.length());
+	TextOut (hdc, answer->x - XSPACINGSHORT, answer->y, answer->label.c_str(), answer->label.length());
 
 	SetTextAlign(hdc, TA_LEFT); //reset text align
 
@@ -147,45 +157,37 @@ void generalInfo::toggleCommit()
 	if (committed) //if the state is committed when the button was pressed, open the boxes up.
 	{
 		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Lock");
-		SendMessage(age.hwnd,EM_SETREADONLY,FALSE,NULL);
-		SendMessage(name.hwnd, EM_SETREADONLY,FALSE,NULL);
-		SendMessage(points.hwnd, EM_SETREADONLY,FALSE,NULL);
+		SendMessage(statList->getStat(AG)->hwnd,EM_SETREADONLY,FALSE,NULL);
+		SendMessage(statList->getStat(NM)->hwnd, EM_SETREADONLY,FALSE,NULL);
+		SendMessage(statList->getStat(PT)->hwnd, EM_SETREADONLY,FALSE,NULL);
 		committed = FALSE;
 	}
 	else //if the state was uncommitted when the button was pressed, close the boxes.
 	{
-		commitStat(&name);
-		commitStat(&age);
-		commitStat(&points);
+		commitStat(NM);
+		commitStat(AG);
+		commitStat(PT);
 		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Unlock");
-		SendMessage(age.hwnd,EM_SETREADONLY,TRUE,NULL);
-		SendMessage(name.hwnd, EM_SETREADONLY,TRUE,NULL);
-		SendMessage(points.hwnd, EM_SETREADONLY,TRUE,NULL);
+		SendMessage(statList->getStat(AG)->hwnd,EM_SETREADONLY,TRUE,NULL);
+		SendMessage(statList->getStat(NM)->hwnd, EM_SETREADONLY,TRUE,NULL);
+		SendMessage(statList->getStat(PT)->hwnd, EM_SETREADONLY,TRUE,NULL);
 		committed = TRUE;
 	}
 }
 
-
-void generalInfo::commitStat(bunnyStat* stat)
+void generalInfo::commitStat(statWord stat)
 {
-	int length = GetWindowTextLengthW(stat->hwnd);
+	bunnyStat* answer = statList->getStat(stat);
+
+	if (answer->identifier == EMPTY)
+		callError(L"Empty pointer at generalInfo::commitStat");
+
+	int length = GetWindowTextLengthW(answer->hwnd);
 	std::wstring string = L"test";
 	string.resize(length);
-	GetWindowTextW(stat->hwnd, (LPWSTR)string.c_str(), length+1); //GetWindowText doesn't understand "Length," or GetWindowTextLength doesn't understand how to work.
-	stat->string = string;
-	stat->amount = _wtoi(stat->string.c_str()); //TODO: test this
-}
-
-bunnyStat* generalInfo::translateStatWord(statWord stat)
-{
-	if (stat == NM)
-		return &name;
-	else if (stat == AG)
-		return &age;
-	else if (stat == PT)
-		return &points;
-	else
-		return NULL;
+	GetWindowTextW(answer->hwnd, (LPWSTR)string.c_str(), length+1); //GetWindowText doesn't understand "Length," or GetWindowTextLength doesn't understand how to work.
+	answer->string = string;
+	answer->amount = _wtoi(answer->string.c_str()); //TODO: test this
 }
 
 bool generalInfo::isCommitted()
@@ -205,4 +207,20 @@ void generalInfo::toggleDisable(bool dependency)
 		Button_Enable(disableButton, FALSE);
 		disabled = TRUE;
 	}
+}
+
+void generalInfo::setStart(int x, int y)
+{
+	xStart = x;
+	yStart = y;
+}
+
+int generalInfo::getXStart()
+{
+	return xStart;
+}
+
+int generalInfo::getYStart()
+{
+	return yStart;
 }

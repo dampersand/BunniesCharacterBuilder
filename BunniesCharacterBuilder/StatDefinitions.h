@@ -1,32 +1,47 @@
 #ifndef _STAT_DEFINITIONS_H
 #define _STAT_DEFINITIONS_H
 #include <string>
+#include <Windows.h>
 
-struct messengerData //structure to be passed around for calculation's sake
-{
-	int strength, intelligence, dexterity, health, speed, der2, der3, points, bunFu, brawl, fat, run;
-	messengerData()
-	{
-		strength = 0;
-		intelligence = 0;
-		dexterity = 0;
-		health = 0;
-		speed = 0;
-		der2 = 0;
-		der3 = 0;
-		points = 0;
-		bunFu = 0;
-		brawl = 0;
-		fat = 0;
-		run = 0;
-	}
-};
+typedef unsigned int statWord;
 
 struct bunnyStat
 {
 	int amount, x, y;
 	std::wstring label, string;
-	HWND hwnd; //handle to display box
+	statWord identifier;
+	HWND hwnd, addButton, subtractButton; //handle to display box and buttons.  Leave buttons uninitialized for non base stats.
+	bunnyStat *next, *prev;
+	void updateStat() { SendMessage(hwnd,WM_SETTEXT,FALSE,(LPARAM) string.c_str()); }
+};
+
+class messengerData //dynamic list of bunny stats.  Currently set by using a statbuilder program, in the future will be file-driven.
+{
+	bunnyStat* first;
+	bunnyStat* last;
+
+	/*helper functions*/
+	void insertStatFront(bunnyStat statToAdd);
+	void insertStatBack(bunnyStat statToAdd);
+	void removeStatFront();
+	void removeStatBack();
+	bool isEmpty();
+
+	bunnyStat* getNextStat(bunnyStat* currentCard);
+
+public:
+	messengerData(); //c-tor
+	~messengerData(); //d-tor
+	
+	/*engine functions*/
+	bunnyStat* getStat(statWord stat);
+	bool changeStat(statWord stat, int addMe);
+	bool changeStat(statWord stat, std::wstring newString);
+	void changeStatLocation(statWord stat, int x, int y);
+	void makeNewStat(statWord stat, int am, int X, int Y, std::wstring lab, std::wstring str, HWND hwnd, HWND add, HWND sub);
+	void editStat(statWord stat, int am, int X, int Y, std::wstring str, std::wstring lab, HWND hwnd, HWND add, HWND sub);
+	void editStat(bunnyStat* stat);
+
 };
 
 //Anything that has the potential to break DPI-awareness is placed here for troubleshooting convenience later.
@@ -43,11 +58,10 @@ struct bunnyStat
 
 
 
-typedef unsigned int statWord;
-
 //note that all statWords are multiples of 100 away from their corresponding buttons.
 
-//base statWords
+//statWords - hopefully this will be file-driven in the future.
+#define EMPTY 100 //an empty stat
 #define ST 101
 #define IQ 102
 #define DX 103
@@ -67,6 +81,9 @@ typedef unsigned int statWord;
 #define BTC 117 //bitechance
 #define KKC 118 //kickchance
 
+//advantages and disadvantages
+#define FAT 150 //Fat disadvantage
+
 typedef unsigned int buttonID;
 //button IDs
 #define ID_ST_ADD 201
@@ -82,5 +99,10 @@ typedef unsigned int buttonID;
 //utility button IDs
 #define ID_TOGGLE_GENERAL 401
 #define ID_TOGGLE_BASE 402
+
+//skillwords
+#define BF 501 //bunFu
+#define BW 502 //brawl
+#define RN 503 //running
 
 #endif //_STAT_DEFINITIONS_H guard word

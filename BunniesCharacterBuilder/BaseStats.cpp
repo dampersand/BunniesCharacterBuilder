@@ -1,79 +1,29 @@
 #include "BaseStats.h"
 #include <stdlib.h>
 
-baseStats::baseStats() //constructor
+baseStats::baseStats(messengerData &data) //constructor
 {
+	statList = &data;
 
-
-	stats.Strength.amount = 10;
-	stats.Intelligence.amount = 10;
-	stats.Dexterity.amount = 10;
-	stats.Health.amount = 10;
-	stats.Strength.x = 0;
-	stats.Strength.y = 0;
-	stats.Intelligence.x = 0;
-	stats.Intelligence.y = 0;
-	stats.Dexterity.x = 0;
-	stats.Dexterity.y = 0;
-	stats.Health.x = 0;
-	stats.Health.y = 0;
-	stats.Strength.label = L"Strength";
-	stats.Dexterity.label = L"Dexterity";
-	stats.Intelligence.label = L"Intelligence";
-	stats.Health.label = L"Health";
-	stats.Strength.hwnd = NULL;
-	stats.Strength.addButton = NULL;
-	stats.Strength.subtractButton = NULL;
-	stats.Intelligence.hwnd = NULL;
-	stats.Intelligence.addButton = NULL;
-	stats.Intelligence.subtractButton = NULL;
-	stats.Dexterity.hwnd = NULL;
-	stats.Dexterity.addButton = NULL;
-	stats.Dexterity.subtractButton = NULL;
-	stats.Health.hwnd = NULL;
-	stats.Health.addButton = NULL;
-	stats.Health.subtractButton = NULL;
-
-	stats.Strength.string = std::to_wstring(stats.Strength.amount);
-	stats.Intelligence.string = std::to_wstring(stats.Intelligence.amount);
-	stats.Dexterity.string = std::to_wstring(stats.Dexterity.amount);
-	stats.Health.string = std::to_wstring(stats.Health.amount);
+	statList->makeNewStat(ST, 10, 0, 0, L"Strength", L"10", 0, 0, 0);
+	statList->makeNewStat(IQ, 10, 0, 0, L"Intelligence", L"10", 0, 0, 0);
+	statList->makeNewStat(DX, 10, 0, 0, L"Dexterity", L"10", 0, 0, 0);
+	statList->makeNewStat(HT, 10, 0, 0, L"Health", L"10", 0, 0, 0);
 
 	xSize = 0;
 	ySize = 0;
+	xStart = 0;
+	yStart = 0;
 
 	committed = FALSE;
 	disabled = TRUE;
 }
 
-
-int baseStats::getStatInt(statWord stat) //returns -1 on poorly requested stat, returns stat otherwise.
-{
-	oneStat* answer = translateStatWord(stat);
-	if (!answer)
-	{
-		callError(L"Attempted to translate unknown statWord at getStatInt");
-		return -1;
-	}
-	return answer->amount;
-}
-
-LPCWSTR baseStats::getStatString(statWord stat)
-{
-	oneStat* answer = translateStatWord(stat);
-	if (!answer)
-	{
-		callError(L"Attempted to translate unknown statWord at getStatString");
-		return L"-1";
-	}
-	return answer->string.c_str();
-}
-
 int baseStats::changeStat(statWord stat, int addMe) //returns number of points used
 {
-	oneStat* statChanger = translateStatWord(stat); //determine stat to change, 0 if some mistake
-	if (!statChanger)
-		callError(L"Attempted to translate unknown statWord at changeStat");
+	bunnyStat* statChanger = statList->getStat(stat); //determine stat to change, 0 if some mistake
+	if (statChanger->identifier == EMPTY)
+		callError(L"Empty pointer at baseStats::changeStat");
 
 	/*determine point cost*/
 	int dir = 0;
@@ -96,7 +46,9 @@ int baseStats::changeStat(statWord stat, int addMe) //returns number of points u
 	}
 
 	statChanger->string = std::to_wstring(statChanger->amount); //display new amount
-	SendMessage(statChanger->hwnd,WM_SETTEXT,FALSE,(LPARAM) statChanger->string.c_str());
+	statChanger->updateStat();
+
+	statList->editStat(statChanger);
 
 	return -pointChange;
 }
@@ -116,22 +68,42 @@ int baseStats::getYSize()
 	return ySize;
 }
 
-void baseStats::createBoxes(HWND hwnd, int x, int y)
+void baseStats::createBoxes(HWND hwnd)
 {
-	stats.Strength.x = x + TAB;
-	stats.Strength.y = y;
-	stats.Intelligence.x = x + TAB;
-	stats.Intelligence.y = y+BOXHEIGHT+YSPACING;
-	stats.Dexterity.x = x + TAB;
-	stats.Dexterity.y = y+2*BOXHEIGHT+2*YSPACING;
-	stats.Health.x = x + TAB;
-	stats.Health.y = y+3*BOXHEIGHT+3*YSPACING;
-	xSize = stats.Strength.x + BOXLENGTH;
-	ySize = stats.Health.y + BOXHEIGHT;
-	stats.Strength.hwnd = CreateWindow(TEXT("EDIT"), stats.Strength.string.c_str(), WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, stats.Strength.x, stats.Strength.y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
-	stats.Intelligence.hwnd = CreateWindow(TEXT("EDIT"), stats.Intelligence.string.c_str(), WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, stats.Intelligence.x, stats.Intelligence.y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
-	stats.Dexterity.hwnd = CreateWindow(TEXT("EDIT"), stats.Dexterity.string.c_str(), WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, stats.Dexterity.x, stats.Dexterity.y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
-	stats.Health.hwnd = CreateWindow(TEXT("EDIT"), stats.Health.string.c_str(), WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, stats.Health.x, stats.Health.y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
+	int x = xStart;
+	int y = yStart;
+
+	//get temporary stat pointers
+	bunnyStat *strength = statList->getStat(ST);
+	bunnyStat *intelligence = statList->getStat(IQ);
+	bunnyStat *dexterity = statList->getStat(DX);
+	bunnyStat *health = statList->getStat(HT);
+
+	//set location of boxes - one day I will rewrite this so the UI does it.
+	strength->x = x + TAB;
+	strength->y = y;
+	intelligence->x = x + TAB;
+	intelligence->y = y+BOXHEIGHT+YSPACING;
+	dexterity->x = x + TAB;
+	dexterity->y = y+2*BOXHEIGHT+2*YSPACING;
+	health->x = x+TAB;
+	health->y = y+3*BOXHEIGHT+ 3*YSPACING;
+
+	//update sizes - can be rewritten to select largest x from a list... but then ya gotta make a local stat list.
+	xSize = strength->x + BOXLENGTH;
+	ySize = health->y + BOXHEIGHT;
+
+	//create windows - consider making a helper function
+	strength->hwnd = CreateWindow(TEXT("EDIT"), strength->string.c_str(), WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, strength->x, strength->y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
+	intelligence->hwnd = CreateWindow(TEXT("EDIT"), intelligence->string.c_str(), WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, intelligence->x, intelligence->y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
+	dexterity->hwnd = CreateWindow(TEXT("EDIT"), dexterity->string.c_str(), WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, dexterity->x, dexterity->y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
+	health->hwnd = CreateWindow(TEXT("EDIT"), health->string.c_str(), WS_VISIBLE | WS_CHILD | WS_BORDER | ES_CENTER | ES_READONLY, health->x, health->y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
+
+	//update statList with initial values and information
+	statList->editStat(strength);
+	statList->editStat(dexterity);
+	statList->editStat(intelligence);
+	statList->editStat(health);
 }
 
 void baseStats::createButtons(HWND hwnd)
@@ -143,21 +115,27 @@ void baseStats::createButtons(HWND hwnd)
 
 	xSize += XSPACINGLONG + XSPACINGSHORT + 2*BOXLENGTH; //new buttons are this long... consider rewriting to be more UI dependent
 
-	createToggleButton(hwnd, xSize, stats.Health.y - YSPACING);
+	createToggleButton(hwnd, xSize, statList->getStat(HT)->y - YSPACING);
 }
 
 void baseStats::createOneButton(statWord stat, HWND hwnd, buttonID idUp, buttonID idDown)
 {
-	oneStat *ptr = translateStatWord(stat);
+	//get a temporary pointer
+	bunnyStat *ptr = statList->getStat(stat);
+
 	if (!ptr)
 	{
-		callError(L"Attempted to translate unknown statWord at createOneButton");
+		callError(L"Attempted to translate unknown statWord at baseStats::createOneButton");
 		return;
 	}
+	//create addition or subtraction buttons
 	ptr->addButton = CreateWindow(TEXT("BUTTON"), TEXT("+"), WS_VISIBLE | WS_CHILD | WS_BORDER | BS_PUSHBUTTON, ptr->x + XSPACINGLONG + BOXLENGTH, ptr->y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) idUp, NULL, NULL);
 	ptr->subtractButton = CreateWindow(TEXT("BUTTON"), TEXT("-"), WS_VISIBLE | WS_CHILD | WS_BORDER | BS_PUSHBUTTON, ptr->x + XSPACINGLONG + XSPACINGSHORT + 2*BOXLENGTH, ptr->y, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) idDown, NULL, NULL);
 	Button_Enable(ptr->addButton, FALSE);
 	Button_Enable(ptr->subtractButton, FALSE);
+
+	//update statList
+	statList->editStat(ptr);
 }
 
 void baseStats::createToggleButton(HWND hwnd, int x, int y)
@@ -177,8 +155,8 @@ void baseStats::paintAll(HDC hdc)
 
 void baseStats::paintText(statWord stat, HDC hdc)
 {
-	oneStat *paintStat = translateStatWord(stat);
-	if (!paintStat)
+	bunnyStat *paintStat = statList->getStat(stat);
+	if (paintStat->identifier == EMPTY)
 	{
 		callError(L"Attempted to translate unknown statWord at paintText");
 		return;
@@ -191,37 +169,17 @@ void baseStats::paintText(statWord stat, HDC hdc)
 
 }
 
-oneStat* baseStats::translateStatWord(statWord stat)
-{
-	switch(stat)
-	{
-	case ST:
-		return &stats.Strength;
-
-	case IQ:
-		return &stats.Intelligence;
-
-	case DX:
-		return &stats.Dexterity;
-
-	case HT:
-		return &stats.Health;
-
-	default:
-		return NULL;
-	}
-}
-
 void baseStats::callError(std::wstring info)
 {
 	MessageBox(NULL, info.c_str(), NULL, MB_OK);
 	MessageBox(NULL, L"The program may continue, but check anything dependent on the base stats for errors.", NULL, MB_OK);
 }
 
-void baseStats::engineReceiver(WORD identifier, messengerData &data, bool dependency)
+void baseStats::engineReceiver(WORD identifier, bool dependency)
 {
 	int modifier = 0;
 	statWord target = 0;
+
 	switch(identifier)
 	{
 	case ID_ST_ADD:
@@ -264,8 +222,10 @@ void baseStats::engineReceiver(WORD identifier, messengerData &data, bool depend
 		break;
 	}
 
+	bunnyStat* points = statList->getStat(PT);
+	points->amount += changeStat(target, modifier);
+	statList->editStat(points);
 
-	data.points += changeStat(target,modifier);
 }
 
 void baseStats::toggleCommit()
@@ -280,28 +240,20 @@ void baseStats::toggleCommit()
 	{
 		committed = FALSE;
 		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Lock Stats");
-		Button_Enable(stats.Strength.addButton, TRUE);
-		Button_Enable(stats.Strength.subtractButton, TRUE);
-		Button_Enable(stats.Intelligence.addButton, TRUE);
-		Button_Enable(stats.Intelligence.subtractButton, TRUE);
-		Button_Enable(stats.Dexterity.addButton, TRUE);
-		Button_Enable(stats.Dexterity.subtractButton, TRUE);
-		Button_Enable(stats.Health.addButton, TRUE);
-		Button_Enable(stats.Health.subtractButton, TRUE);
+		setStatButtonState(ST, !committed);
+		setStatButtonState(IQ, !committed);
+		setStatButtonState(DX, !committed);
+		setStatButtonState(HT, !committed);
 	}
 
 	else
 	{
 		committed = TRUE;
 		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Unlock");
-		Button_Enable(stats.Strength.addButton, FALSE);
-		Button_Enable(stats.Strength.subtractButton, FALSE);
-		Button_Enable(stats.Intelligence.addButton, FALSE);
-		Button_Enable(stats.Intelligence.subtractButton, FALSE);
-		Button_Enable(stats.Dexterity.addButton, FALSE);
-		Button_Enable(stats.Dexterity.subtractButton, FALSE);
-		Button_Enable(stats.Health.addButton, FALSE);
-		Button_Enable(stats.Health.subtractButton, FALSE);
+		setStatButtonState(ST, !committed);
+		setStatButtonState(IQ, !committed);
+		setStatButtonState(DX, !committed);
+		setStatButtonState(HT, !committed);
 	}
 }
 
@@ -312,28 +264,20 @@ void baseStats::toggleDisable(bool dependency)
 		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Lock Stats");
 		Button_Enable(disableButton, TRUE);
 		disabled = FALSE;
-		Button_Enable(stats.Strength.addButton, TRUE);
-		Button_Enable(stats.Strength.subtractButton, TRUE);
-		Button_Enable(stats.Intelligence.addButton, TRUE);
-		Button_Enable(stats.Intelligence.subtractButton, TRUE);
-		Button_Enable(stats.Dexterity.addButton, TRUE);
-		Button_Enable(stats.Dexterity.subtractButton, TRUE);
-		Button_Enable(stats.Health.addButton, TRUE);
-		Button_Enable(stats.Health.subtractButton, TRUE);
+		setStatButtonState(ST, !disabled);
+		setStatButtonState(IQ, !disabled);
+		setStatButtonState(DX, !disabled);
+		setStatButtonState(HT, !disabled);
 	}
 	else
 	{
 		Button_Enable(disableButton, FALSE);
 		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"DISABLED");
 		disabled = TRUE;
-		Button_Enable(stats.Strength.addButton, FALSE);
-		Button_Enable(stats.Strength.subtractButton, FALSE);
-		Button_Enable(stats.Intelligence.addButton, FALSE);
-		Button_Enable(stats.Intelligence.subtractButton, FALSE);
-		Button_Enable(stats.Dexterity.addButton, FALSE);
-		Button_Enable(stats.Dexterity.subtractButton, FALSE);
-		Button_Enable(stats.Health.addButton, FALSE);
-		Button_Enable(stats.Health.subtractButton, FALSE);
+		setStatButtonState(ST, !disabled);
+		setStatButtonState(IQ, !disabled);
+		setStatButtonState(DX, !disabled);
+		setStatButtonState(HT, !disabled);
 	}
 }
 
@@ -404,4 +348,34 @@ int baseStats::getPointChange(int initialStat, int direction)
 		}
 	}
 	return 0;
+}
+
+void baseStats::setStart(int x, int y)
+{
+	xStart = x;
+	yStart = y;
+}
+
+int baseStats::getXStart()
+{
+	return xStart;
+}
+
+int baseStats::getYStart()
+{
+	return yStart;
+}
+
+void baseStats::setStatButtonState(statWord stat, bool state)
+{
+	bunnyStat* answer = statList->getStat(stat);
+
+	if (answer->identifier == EMPTY)
+	{
+		callError(L"empty pointer at baseStats::setStatButtonState");
+		return;
+	}
+
+	Button_Enable(answer->addButton, state);
+	Button_Enable(answer->subtractButton, state);
 }

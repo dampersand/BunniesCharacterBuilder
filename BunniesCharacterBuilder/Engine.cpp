@@ -1,14 +1,18 @@
 #include "Engine.h"
 
 
-Engine::Engine()
+Engine::Engine() : general(data), derivedStats(data), bigFour(data)
 {
-	generalXStart = INITIALDISTANCE; //x & y locations of first general info
-	generalYStart = INITIALDISTANCE;
-	bigFourXStart = INITIALDISTANCE; //x & y locations of big four base stats
-	bigFourYStart = INITIALDISTANCE;
-	derivedStatsXStart = INITIALDISTANCE;
-	derivedStatsYStart = INITIALDISTANCE;
+	UIx = INITIALDISTANCE;
+	UIy = INITIALDISTANCE;
+	data.makeNewStat(EMPTY,0,0,0,L"EMPTY", L"0",0,0,0); //empty stat
+
+	/*suppress those annoying error messages in the beginning, at least until skills get coded.*/
+	data.makeNewStat(BF,0,0,0,L"EMPTY",L"0",0,0,0);
+	data.makeNewStat(BW,0,0,0,L"EMPTY",L"0",0,0,0);
+	data.makeNewStat(FAT,0,0,0,L"EMPTY",L"0",0,0,0);
+	data.makeNewStat(RN,0,0,0,L"EMPTY",L"0",0,0,0);
+	
 }
 
 int Engine::buttonRouter(WPARAM wParam) //helper functions are for suckers.
@@ -24,32 +28,22 @@ int Engine::buttonRouter(WPARAM wParam) //helper functions are for suckers.
 	case ID_HT_ADD:
 	case ID_HT_SUB: //if a base-stat button increaser made the call
 
-		bigFour.engineReceiver(LOWORD(wParam), data, general.isCommitted()); //send the call to the base stats to spend the points
-		general.addStat(PT, data.points - general.getStat(PT)); //update general points number with the new one
+		bigFour.engineReceiver(LOWORD(wParam), general.isCommitted()); //send the call to the base stats to spend the points
 		break;
-
-
 
 	case ID_TOGGLE_GENERAL: //if the general toggle button made the call
 		general.engineReceiver(LOWORD(wParam), !bigFour.isCommitted()); //send the call to the general stats along with dependency information
-		bigFour.engineReceiver(LOWORD(wParam), data, general.isCommitted()); //notify main stats that a predecessor has locked in.
-
-		if (general.isCommitted()) //update messengerData with new user input
-			data.points = general.getStat(PT);
+		bigFour.engineReceiver(LOWORD(wParam), general.isCommitted()); //notify main stats that a predecessor has locked in.
 		break;
 
 
 	case ID_TOGGLE_BASE: //if the base toggle button made the call
-		bigFour.engineReceiver(LOWORD(wParam), data, general.isCommitted()); //send the call to the base stats along with dependency information
+		bigFour.engineReceiver(LOWORD(wParam), general.isCommitted()); //send the call to the base stats along with dependency information
 		general.engineReceiver(LOWORD(wParam), !bigFour.isCommitted()); //notify general stats that a dependent has locked in.
 
 		if (bigFour.isCommitted()) //update messengerData and recalculate/display derived stats
 		{
-			data.strength = bigFour.getStatInt(ST);
-			data.intelligence = bigFour.getStatInt(IQ);
-			data.dexterity = bigFour.getStatInt(DX);
-			data.health = bigFour.getStatInt(HT);
-			derivedStats.recalculateAll(data);
+			derivedStats.recalculateAll();
 		}
 		break;
 
@@ -63,28 +57,22 @@ int Engine::buttonRouter(WPARAM wParam) //helper functions are for suckers.
 
 void Engine::initializeGeneral(HWND hwnd)
 {
-	general.createBoxes(hwnd, generalXStart, generalYStart);
-	bigFourYStart = general.getYSize();
+	general.setStart(UIx, UIy);
+	general.createBoxes(hwnd);
 }
 
 void Engine::initializeBase(HWND hwnd)
 {
-	bigFourYStart = general.getYSize() + 3*YSPACING;
-	bigFour.createBoxes(hwnd, bigFourXStart, bigFourYStart);
+	bigFour.setStart(UIx, general.getYSize() + 3*YSPACING);
+	bigFour.createBoxes(hwnd);
 	bigFour.createButtons(hwnd);
 }
 
 void Engine::initializeDerived(HWND hwnd)
 {
-	derivedStatsYStart = bigFour.getYSize() + 4*YSPACING;
-	derivedStats.createBoxes(hwnd, derivedStatsXStart, derivedStatsYStart);
-	messengerData initCalc;
-	initCalc.strength = bigFour.getStatInt(ST);
-	initCalc.intelligence = bigFour.getStatInt(IQ);
-	initCalc.dexterity = bigFour.getStatInt(DX);
-	initCalc.health = bigFour.getStatInt(HT);
-	initCalc.bunFu = 0;
-	derivedStats.recalculateAll(initCalc);
+	derivedStats.setStart(UIx, bigFour.getYSize() + 4*YSPACING);
+	derivedStats.createBoxes(hwnd);
+	derivedStats.recalculateAll();
 }
 
 void Engine::paintBase(HDC hdc)

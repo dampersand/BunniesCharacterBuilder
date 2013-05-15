@@ -1,31 +1,26 @@
 #include "DerivedStats.h"
 
-derived::derived()
+derived::derived(messengerData &data)
 {
-	statInitiator(&speed, L"Speed", 0, 0, 0);
-	statInitiator(&size, L"Size", 0, 0, 0);
-	statInitiator(&weight, L"Weight", 0, 0, 0);
-	statInitiator(&dodge, L"Dodge", 0, 0, 0);
-	statInitiator(&claw, L"Claw", 0, 0, 0);
-	statInitiator(&bite, L"Bite", 0, 0, 0);
-	statInitiator(&kick, L"Kick", 0, 0, 0);
-	statInitiator(&move, L"Move", 0, 0, 0);
-	statInitiator(&clawChance, L"Chance", 0, 0, 0);
-	statInitiator(&biteChance, L"Chance", 0,0,0);
-	statInitiator(&kickChance, L"Chance", 0,0,0);
+	statList = &data;
+
+	statList->makeNewStat(SPD, 0, 0, 0, L"Speed", L"0", 0, 0, 0);
+	statList->makeNewStat(SZ, 0, 0, 0, L"Size", L"0", 0, 0, 0);
+	statList->makeNewStat(WT, 0, 0, 0, L"Weight", L"0", 0, 0, 0);
+	statList->makeNewStat(DG, 0, 0, 0, L"Dodge", L"0", 0, 0, 0);
+	statList->makeNewStat(CW, 0, 0, 0, L"Claw", L"0", 0, 0, 0);
+	statList->makeNewStat(BT, 0, 0, 0, L"Bite", L"0", 0, 0, 0);
+	statList->makeNewStat(KK, 0, 0, 0, L"Kick", L"0", 0, 0, 0);
+	statList->makeNewStat(MV, 0, 0, 0, L"Move", L"0", 0, 0, 0);
+	statList->makeNewStat(CWC, 0, 0, 0, L"Chance", L"0", 0, 0, 0);
+	statList->makeNewStat(BTC, 0, 0, 0, L"Chance", L"0", 0, 0, 0);
+	statList->makeNewStat(KKC, 0, 0, 0, L"Chance", L"0", 0, 0, 0);
+
 
 	xSize = 0;
 	ySize = 0;
-}
-
-void derived::statInitiator(bunnyStat* stat, std::wstring lab, int X, int Y, int am)
-{
-	stat->amount = am;
-	stat->label = lab;
-	stat->x = X;
-	stat->y = Y;
-	stat->hwnd = 0;
-	stat->string = std::to_wstring(stat->amount);
+	xStart = 0;
+	yStart = 0;
 }
 
 int derived::getXSize()
@@ -38,35 +33,79 @@ int derived::getYSize()
 	return ySize;
 }
 
-bunnyStat* derived::translateStatWord(statWord stat)
+void derived::createBoxes(HWND hwnd)
 {
-	switch(stat)
-	{
-	case SPD:
-		return &speed;
-	case SZ:
-		return &size;
-	case WT:
-		return &weight;
-	case DG:
-		return &dodge;
-	case CW:
-		return &claw;
-	case BT:
-		return &bite;
-	case KK:
-		return &kick;
-	case MV:
-		return &move;
-	case CWC:
-		return &clawChance;
-	case BTC:
-		return &biteChance;
-	case KKC:
-		return &kickChance;
-	default:
-		return NULL;
-	}
+	//temporary variables
+	int x = xStart;
+	int y = yStart;
+
+	//temporary statlist
+	bunnyStat* size = statList->getStat(SZ);
+	bunnyStat* weight = statList->getStat(WT);
+	bunnyStat* speed = statList->getStat(SPD);
+	bunnyStat* dodge = statList->getStat(DG);
+	bunnyStat* move = statList->getStat(MV);
+	bunnyStat* claw = statList->getStat(CW);
+	bunnyStat* bite = statList->getStat(BT);
+	bunnyStat* kick = statList->getStat(KK);
+	bunnyStat* clawChance = statList->getStat(CWC);
+	bunnyStat* biteChance = statList->getStat(BTC);
+	bunnyStat* kickChance = statList->getStat(KKC);
+
+	//set initial statlist positions
+	size->x = x + TAB;
+	size->y = y;
+	weight->x = size->x + TAB + BOXLENGTH;
+	weight->y = size->y;
+	speed->x = x + TAB;
+	speed->y = size->y + BOXHEIGHT + YSPACING;
+	dodge->x = speed->x + TAB + BOXLENGTH;
+	dodge->y = speed->y;
+	move->x = x + TAB;
+	move->y = dodge->y + BOXHEIGHT + YSPACING;
+	claw->x = x + TAB;
+	claw->y = move->y + YSPACING + BOXHEIGHT;
+	clawChance->x = claw->x + LONGBOXLENGTH + TAB;
+	clawChance->y = claw->y;
+	bite->x = x + TAB;
+	bite->y = claw->y + YSPACING + BOXHEIGHT;
+	biteChance->x = bite->x + LONGBOXLENGTH + TAB;
+	biteChance->y = bite->y;
+	kick->x = x + TAB;
+	kick->y = bite->y + YSPACING + BOXHEIGHT;
+	kickChance->x = kick->x + LONGBOXLENGTH + TAB;
+	kickChance->y = kick->y;
+
+	//create display boxes
+	createBox(hwnd, size, BOXLENGTH);
+	createBox(hwnd, weight, 1.5*BOXLENGTH);
+	createBox(hwnd, speed, BOXLENGTH);
+	createBox(hwnd, dodge, BOXLENGTH);
+	createBox(hwnd, claw, LONGBOXLENGTH);
+	createBox(hwnd, clawChance, BOXLENGTH);
+	createBox(hwnd, bite, LONGBOXLENGTH);
+	createBox(hwnd, biteChance, BOXLENGTH);
+	createBox(hwnd, kick, LONGBOXLENGTH);
+	createBox(hwnd, kickChance, BOXLENGTH);
+	createBox(hwnd, move, BOXLENGTH);
+
+	xSize = max(kickChance->x + BOXLENGTH, weight->x + BOXLENGTH);
+	ySize = kick->y + BOXHEIGHT;
+	ySize += YSPACING;
+
+	//update stats
+	statList->editStat(size);
+	statList->editStat(weight);
+	statList->editStat(speed);
+	statList->editStat(dodge);
+	statList->editStat(claw);
+	statList->editStat(clawChance);
+	statList->editStat(bite);
+	statList->editStat(biteChance);
+	statList->editStat(kick);
+	statList->editStat(kickChance);
+	statList->editStat(move);
+
 }
 
 void derived::createBox(HWND hwnd, bunnyStat* stat, int length)
@@ -79,183 +118,186 @@ void derived::callError(std::wstring function)
 	MessageBox(NULL, function.c_str(), NULL, MB_OK);
 }
 
-void derived::paintText(bunnyStat* stat, HDC hdc)
+void derived::paintText(statWord stat, HDC hdc)
 {
-	if (!stat)
+	bunnyStat* answer = statList->getStat(stat);
+
+	if (!answer)
 	{
 		callError(L"Empty pointer at derived::paintText");
 		return;
 	}
 	SetTextAlign(hdc, TA_RIGHT);
 
-	TextOut (hdc, stat->x - XSPACINGSHORT, stat->y, stat->label.c_str(), stat->label.length());
+	TextOut (hdc, answer->x - XSPACINGSHORT, answer->y, answer->label.c_str(), answer->label.length());
 
 	SetTextAlign(hdc, TA_LEFT); //reset text align
 
 }
 
-void derived::createBoxes(HWND hwnd, int x, int y)
-{
-	size.x = x + TAB;
-	size.y = y;
-	weight.x = size.x + TAB + BOXLENGTH;
-	weight.y = size.y;
-	speed.x = x + TAB;
-	speed.y = size.y + BOXHEIGHT + YSPACING;
-	dodge.x = speed.x + TAB + BOXLENGTH;
-	dodge.y = speed.y;
-	move.x = x + TAB;
-	move.y = dodge.y + BOXHEIGHT + YSPACING;
-	claw.x = x + TAB;
-	claw.y = move.y + YSPACING + BOXHEIGHT;
-	clawChance.x = claw.x + LONGBOXLENGTH + TAB;
-	clawChance.y = claw.y;
-	bite.x = x + TAB;
-	bite.y = claw.y + YSPACING + BOXHEIGHT;
-	biteChance.x = bite.x + LONGBOXLENGTH + TAB;
-	biteChance.y = bite.y;
-	kick.x = x + TAB;
-	kick.y = bite.y + YSPACING + BOXHEIGHT;
-	kickChance.x = kick.x + LONGBOXLENGTH + TAB;
-	kickChance.y = kick.y;
-
-	createBox(hwnd, &size, BOXLENGTH);
-	createBox(hwnd, &weight, 1.5*BOXLENGTH);
-	createBox(hwnd, &speed, BOXLENGTH);
-	createBox(hwnd, &dodge, BOXLENGTH);
-	createBox(hwnd, &claw, LONGBOXLENGTH);
-	createBox(hwnd, &clawChance, BOXLENGTH);
-	createBox(hwnd, &bite, LONGBOXLENGTH);
-	createBox(hwnd, &biteChance, BOXLENGTH);
-	createBox(hwnd, &kick, LONGBOXLENGTH);
-	createBox(hwnd, &kickChance, BOXLENGTH);
-	createBox(hwnd, &move, BOXLENGTH);
-
-	xSize = max(kickChance.x + BOXLENGTH, weight.x + BOXLENGTH);
-	ySize = kick.y + BOXHEIGHT;
-	ySize += YSPACING;
-
-}
 
 void derived::paintAll(HDC hdc)
 {
-	paintText(&size, hdc);
-	paintText(&weight, hdc);
-	paintText(&speed, hdc);
-	paintText(&dodge, hdc);
-	paintText(&claw, hdc);
-	paintText(&clawChance, hdc);
-	paintText(&kick, hdc);
-	paintText(&kickChance, hdc);
-	paintText(&bite, hdc);
-	paintText(&biteChance, hdc);
-	paintText(&move, hdc);
+	paintText(SZ, hdc);
+	paintText(WT, hdc);
+	paintText(SPD, hdc);
+	paintText(DG, hdc);
+	paintText(CW, hdc);
+	paintText(CWC, hdc);
+	paintText(KK, hdc);
+	paintText(KKC, hdc);
+	paintText(BT, hdc);
+	paintText(BTC, hdc);
+	paintText(MV, hdc);
 }
 
-int derived::getStat(statWord stat)
+void derived::calculateStat(statWord stat)
 {
-	bunnyStat* answer = translateStatWord(stat);
+	bunnyStat* answer = statList->getStat(stat); //answer that we'll set
+	bunnyStat *param1, *param2, *param3, *param4; //parameters to use for calculation
 
-	return answer->amount;
-}
-
-void derived::calculateStat(statWord stat, messengerData data)
-{
-	bunnyStat* answer = translateStatWord(stat);
 	bool flag = FALSE; //flag that specifies whether string has been assigned or not
 
 	switch(stat)
 	{
 	case SPD: //Speed calculation
-		answer->amount = (data.dexterity + data.health)/2;
-		break;
+		{
+			param1 = statList->getStat(DX);
+			param2 = statList->getStat(HT);
+			answer->amount = (param1->amount + param2->amount)/2;
+			break;
+		}
+
 	case SZ: //Size calculation, in stretched out length.
-		answer->amount = 15 + (data.strength - 10);
-		break;
+		{
+			param1 = statList->getStat(ST);
+			answer->amount = 15 + (param1->amount - 10);
+			break;
+		}
+
 	case WT: //Weight calculation, in R-lbs
-		answer->amount = 160+((data.strength - 10)*10) + data.fat;
-		break;
+		{
+			param1 = statList->getStat(ST);
+			param2 = statList->getStat(FAT); //TODO: fix calculation here.  Not sure how 'fat' works.
+			answer->amount = 160+((param1->amount - 10)*10) + param2->amount;
+			break;
+		}
+
 	case DG: //Dodge calculation
-		answer->amount = ((data.speed/2) + 1) + max(data.bunFu*(1/5), data.brawl*(1/10));
-		break;
+		{
+			param1 = statList->getStat(SPD);
+			param2 = statList->getStat(BF);
+			param3 = statList->getStat(BW);
+			answer->amount = ((param1->amount/2) + 1) + max(param2->amount*(1/5), param3->amount*(1/10));
+			break;
+		}
+
 	case CW: //Claw calculation
 		{
-		int modifier = thrustTableMod(data.strength); //determine base thrust modifier
-		int dice = thrustTable(data.strength); //determine base thrust damage
-		std::wstring intermediary;
-		std::wstring modSign;
+			param1 = statList->getStat(ST);
+			param2 = statList->getStat(BF);
+			param3 = statList->getStat(BW);
+			int modifier = thrustTableMod(param1->amount); //determine base thrust modifier
+			int dice = thrustTable(param1->amount); //determine base thrust damage
+			std::wstring intermediary;
+			std::wstring modSign;
 
-		modifier += max(data.bunFu*(1/5), data.brawl*(1/10)) -2;
+			modifier += max(param2->amount*(1/5), param3->amount*(1/10)) -2;
 
-		if (modifier >= 0)
-			modSign = L"+";
-		else
-			modSign = L"";
+			if (modifier >= 0)
+				modSign = L"+";
+			else
+				modSign = L"";
 		
-		intermediary = std::to_wstring(dice);
-		intermediary.append(L"d");
-		intermediary.append(modSign);
-		intermediary.append(std::to_wstring(modifier));
-		answer->string = intermediary;
-		flag = TRUE;
-		break;
+			intermediary = std::to_wstring(dice);
+			intermediary.append(L"d");
+			intermediary.append(modSign);
+			intermediary.append(std::to_wstring(modifier));
+			answer->string = intermediary;
+			flag = TRUE;
+			break;
 		}
 	case CWC: //Claw chance calculation
-		answer->amount = max(data.dexterity, max(data.bunFu, data.brawl));
-		break;
+		{
+			param1 = statList->getStat(DX);
+			param2 = statList->getStat(BF);
+			param3 = statList->getStat(BW);
+			answer->amount = max(param1->amount, max(param2->amount, param3->amount));
+			break;
+		}
 	case BT: //Bite calculation
 		{
-		int modifier = swingTableMod(data.strength); //determine base swing modifier
-		int dice = swingTable(data.strength); //determine base swing damage
-		std::wstring intermediary;
-		std::wstring modSign;
+			param1 = statList->getStat(ST);
+			param2 = statList->getStat(BF);
+			param3 = statList->getStat(BW);
+			int modifier = swingTableMod(param1->amount); //determine base swing modifier
+			int dice = swingTable(param1->amount); //determine base swing damage
+			std::wstring intermediary;
+			std::wstring modSign;
 
-		modifier += max(data.bunFu*(1/5), data.brawl*(1/10)) -1;
+			modifier += max(param2->amount*(1/5), param3->amount*(1/10)) -1;
 
-		if (modifier >= 0)
-			modSign = L"+";
-		else
-			modSign = L"";
+			if (modifier >= 0)
+				modSign = L"+";
+			else
+				modSign = L"";
 		
-		intermediary = std::to_wstring(dice);
-		intermediary.append(L"d");
-		intermediary.append(modSign);
-		intermediary.append(std::to_wstring(modifier));
-		answer->string = intermediary;
-		flag = TRUE;
-		break;
+			intermediary = std::to_wstring(dice);
+			intermediary.append(L"d");
+			intermediary.append(modSign);
+			intermediary.append(std::to_wstring(modifier));
+			answer->string = intermediary;
+			flag = TRUE;
+			break;
 		}
 	case BTC: //Bite chance calculation
-		answer->amount = max(data.dexterity, max(data.bunFu, data.brawl));
-		break;
+		{
+			param1 = statList->getStat(DX);
+			param2 = statList->getStat(BF);
+			param3 = statList->getStat(BW);
+			answer->amount = max(param1->amount, max(param2->amount, param3->amount));
+			break;
+		}
 	case KK: //Kick calculation
 		{
-		int modifier = thrustTableMod(max(data.dexterity - 2, max(data.bunFu - 2, data.brawl - 2)));
-		int dice = thrustTable(max(data.dexterity - 2, max(data.bunFu - 2, data.brawl - 2)));
-		std::wstring intermediary;
-		std::wstring modSign;
+			param1 = statList->getStat(DX);
+			param2 = statList->getStat(BF);
+			param3 = statList->getStat(BW);
+			int modifier = thrustTableMod(max(param1->amount - 2, max(param2->amount - 2, param3->amount - 2)));
+			int dice = thrustTable(max(param1->amount - 2, max(param2->amount - 2, param3->amount - 2)));
+			std::wstring intermediary;
+			std::wstring modSign;
 
-		modifier += max(data.bunFu*(1/5), data.brawl*(1/10)) -1;
+			modifier += max(param2->amount*(1/5), param3->amount*(1/10)) -1;
 
-		if (modifier >= 0)
-			modSign = L"+";
-		else
-			modSign = L"";
+			if (modifier >= 0)
+				modSign = L"+";
+			else
+				modSign = L"";
 		
-		intermediary = std::to_wstring(dice);
-		intermediary.append(L"d");
-		intermediary.append(modSign);
-		intermediary.append(std::to_wstring(modifier));
-		answer->string = intermediary;
-		flag = TRUE;
-		break;
+			intermediary = std::to_wstring(dice);
+			intermediary.append(L"d");
+			intermediary.append(modSign);
+			intermediary.append(std::to_wstring(modifier));
+			answer->string = intermediary;
+			flag = TRUE;
+			break;
 		}
 	case KKC: //Kick chance calculation
-		answer->amount = max(data.dexterity - 2, max(data.bunFu - 2, data.brawl - 2));
-		break;
+		{
+			param1 = statList->getStat(DX);
+			param2 = statList->getStat(BF);
+			param3 = statList->getStat(BW);
+			answer->amount = max(param1->amount - 2, max(param2->amount - 2, param3->amount - 2));
+			break;
+		}
 	case MV: //Move calculation
-		answer->amount = data.speed + (data.run/8);
-		break;
+		{
+			param1 = statList->getStat(SPD);
+			param2 = statList->getStat(RN);
+			answer->amount = param1->amount + (param2->amount/8);
+			break;
+		}
 	default:
 		callError(L"Unknown Stat at derived::calculateStat");
 		break;
@@ -264,7 +306,8 @@ void derived::calculateStat(statWord stat, messengerData data)
 	if (!flag)
 		answer->string = std::to_wstring(answer->amount);
 
-	SendMessage(answer->hwnd,WM_SETTEXT,FALSE,(LPARAM) answer->string.c_str());
+	statList->editStat(answer); //update calculation
+	answer->updateStat();
 
 }
 
@@ -539,33 +582,33 @@ int derived::swingTableMod(int strength)
 	}
 }
 
-void derived::recalculateAll(messengerData data)
+void derived::recalculateAll()
 {
-	messengerData newData = data; //speed size weight dodge claw bite kick move
-	newData.strength = data.dexterity;
-	newData.intelligence = data.health;
-	calculateStat(SPD, newData); //calculate speed
+	calculateStat(SPD); //calculate speed
+	calculateStat(SZ); //calculate size
+	calculateStat(WT); //calculate weight
+	calculateStat(DG);
+	calculateStat(CW);
+	calculateStat(BT);
+	calculateStat(KK);
+	calculateStat(CWC);
+	calculateStat(BTC);
+	calculateStat(KKC);
+	calculateStat(MV);
+}
 
-	newData.strength = data.strength;
-	calculateStat(SZ, newData); //calculate size
+void derived::setStart(int x, int y)
+{
+	xStart = x;
+	yStart = y;
+}
 
-	calculateStat(WT, newData); //calculate weight
+int derived::getXStart()
+{
+	return xStart;
+}
 
-	newData.speed = getStat(SPD);
-	calculateStat(DG, newData);
-
-	newData.strength = data.strength;
-	calculateStat(CW, newData);
-
-	calculateStat(BT, newData);
-
-	newData.strength = data.dexterity;
-	calculateStat(KK, newData);
-
-	calculateStat(CWC, newData);
-	calculateStat(BTC, newData);
-	calculateStat(KKC, newData);
-
-	newData.speed = getStat(SPD);
-	calculateStat(MV, newData);
+int derived::getYStart()
+{
+	return yStart;
 }

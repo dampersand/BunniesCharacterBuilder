@@ -1,6 +1,8 @@
 #ifndef __ENGINE_H
 #define __ENGINE_H
 
+#include "StatDefinitions.h"
+
 #include "BaseStats.h"
 #include "General.h"
 #include "DerivedStats.h"
@@ -8,12 +10,12 @@
 
 class Engine
 {
-	baseStats bigFour;
-	generalInfo general;
-	derived derivedStats;
 	messengerData data;
+	generalInfo general;
+	baseStats bigFour;
+	derived derivedStats;
 
-	int generalXStart, generalYStart, bigFourXStart, bigFourYStart, derivedStatsXStart, derivedStatsYStart;
+	int UIx, UIy;
 
 public:
 	Engine();

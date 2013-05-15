@@ -10,32 +10,33 @@
 class derived
 {
 private:
-	bunnyStat speed, size, weight, dodge, claw, bite, kick, move, clawChance, biteChance, kickChance;
+	messengerData* statList;
 	int xSize, ySize;
+	int xStart, yStart;
 
-	void statInitiator(bunnyStat* stat, std::wstring lab, int X, int Y, int am);
-	bunnyStat* translateStatWord(statWord stat);
 	void createBox(HWND hwnd, bunnyStat* stat, int length); //helper function to make boxes
 	void callError(std::wstring function); //utility function, interior
-	void paintText(bunnyStat* stat, HDC hdc); //helper function to paint text
+	void paintText(statWord stat, HDC hdc); //helper function to paint text
 	int thrustTable(int strength);
 	int thrustTableMod(int strength);
 	int swingTable(int strength);
 	int swingTableMod(int strength);
 
 public:
-	derived();
+	derived(messengerData &data);
 
 	/*Engine member functions*/
-	int getYSize();
-	int getXSize();
-	int getStat(statWord stat);
-	void recalculateAll(messengerData data);
-	void calculateStat(statWord stat, messengerData data);
+	void recalculateAll();
+	void calculateStat(statWord stat); //includes logic for calculation
 
 	/*UI Member Functions*/
-	void createBoxes(HWND hwnd, int x, int y);
+	void createBoxes(HWND hwnd);
 	void paintAll(HDC hdc);
+	void setStart(int x, int y);
+	int getXStart();
+	int getYStart();
+	int getYSize();
+	int getXSize();
 };
 		
 
