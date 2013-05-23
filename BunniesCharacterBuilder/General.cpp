@@ -4,7 +4,7 @@
 generalInfo::generalInfo(messengerData &data) //constructor
 {
 	statList = &data;
-	statList->makeNewStat(AG, 12, 0, 0, L"Age", L"0", 0, 0, 0);
+	statList->makeNewStat(AG, 12, 0, 0, L"Age", L"12", 0, 0, 0);
 	statList->makeNewStat(PT, 100, 0, 0, L"Points", L"100", 0, 0, 0);
 	statList->makeNewStat(NM, 0, 0, 0, L"Name", L"", 0, 0, 0);
 	disableButton = NULL;
@@ -15,14 +15,6 @@ generalInfo::generalInfo(messengerData &data) //constructor
 	ySize = 0;
 	xStart = 0;
 	yStart = 0;
-}
-
-int generalInfo::getStat(statWord stat)
-{
-	bunnyStat* answer = statList->getStat(stat);
-	if (stat == NM)
-		return -1; //consider handling an error
-	return answer->amount;
 }
 
 int generalInfo::addStat(statWord stat, int newStat)

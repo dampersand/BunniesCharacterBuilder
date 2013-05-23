@@ -28,6 +28,7 @@ public:
 	/*Engine member functions*/
 	void recalculateAll();
 	void calculateStat(statWord stat); //includes logic for calculation
+	void engineReceiver(WORD identifier, bool dependency);
 
 	/*UI Member Functions*/
 	void createBoxes(HWND hwnd);

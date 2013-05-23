@@ -103,8 +103,13 @@ void messengerData::removeStatBack()
 	delete dummyStat;
 }
 
-//tested, working
 bunnyStat* messengerData::getStat(statWord stat)
+{
+	return getStat(stat, FALSE);
+}
+
+//tested, working
+bunnyStat* messengerData::getStat(statWord stat, bool suppressErrorMessage)
 {
 	bunnyStat* dummyStat = 0;
 	dummyStat = this->first;
@@ -116,7 +121,8 @@ bunnyStat* messengerData::getStat(statWord stat)
 			std::wstring errorMsg = L"messengerData could not find stat ";
 			std::wstring appendMsg = std::to_wstring(stat);
 			errorMsg.append(appendMsg);
-			MessageBox(NULL, errorMsg.c_str(), NULL, MB_OK);
+			if (!suppressErrorMessage)
+				MessageBox(NULL, errorMsg.c_str(), NULL, MB_OK);
 			return getStat(EMPTY);
 		}
 	}

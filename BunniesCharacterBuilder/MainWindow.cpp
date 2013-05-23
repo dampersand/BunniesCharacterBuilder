@@ -12,6 +12,8 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		engine.initializeGeneral(m_hwnd);
 		engine.initializeBase(m_hwnd);
 		engine.initializeDerived(m_hwnd);
+		engine.determineWidth(); //make private after testing
+		engine.initializeAdvantages(m_hwnd);
 		return 0;
 
     case WM_DESTROY:
@@ -26,6 +28,7 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			engine.paintBase(hdc);
 			engine.paintGeneral(hdc);
 			engine.paintDerived(hdc);
+			engine.paintAdvantages(hdc);
 			EndPaint(m_hwnd, &ps);
 		}
         return 0;
@@ -36,6 +39,10 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case BN_CLICKED:
 				engine.buttonRouter(wParam); //current location in edit
+				break;
+
+			case LBN_SELCHANGE:
+				engine.boxRouter(wParam);
 				break;
 
 			default:

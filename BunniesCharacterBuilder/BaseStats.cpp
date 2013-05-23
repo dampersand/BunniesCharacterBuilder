@@ -19,7 +19,7 @@ baseStats::baseStats(messengerData &data) //constructor
 	disabled = TRUE;
 }
 
-int baseStats::changeStat(statWord stat, int addMe) //returns number of points used
+int baseStats::changeStat(statWord stat, int addMe) //returns number of points used, if required in future.
 {
 	bunnyStat* statChanger = statList->getStat(stat); //determine stat to change, 0 if some mistake
 	if (statChanger->identifier == EMPTY)
@@ -45,10 +45,12 @@ int baseStats::changeStat(statWord stat, int addMe) //returns number of points u
 		pointChange = 0;
 	}
 
-	statChanger->string = std::to_wstring(statChanger->amount); //display new amount
-	statChanger->updateStat();
+	statChanger->string = std::to_wstring(statChanger->amount); //set new amount to displayable string
+	statChanger->updateStat(); //display string
+	statList->editStat(statChanger); //commit all stat changes
 
-	statList->editStat(statChanger);
+	//update and display point changes
+	statList->changeStat(PT, -pointChange);
 
 	return -pointChange;
 }
@@ -219,12 +221,13 @@ void baseStats::engineReceiver(WORD identifier, bool dependency)
 		return;
 
 	default:
-		break;
+		return;
 	}
 
-	bunnyStat* points = statList->getStat(PT);
-	points->amount += changeStat(target, modifier);
-	statList->editStat(points);
+	if (target) //this section will run if an add- or subtract button was pressed
+	{
+		changeStat(target, modifier); //change the stat in question
+	}
 
 }
 
