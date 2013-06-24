@@ -115,14 +115,14 @@ void derived::createBox(HWND hwnd, bunnyStat* stat, int length)
 
 void derived::callError(std::wstring function)
 {
-	MessageBox(NULL, function.c_str(), NULL, MB_OK);
+	MessageBox(NULL, function.c_str(), NULL, MB_OK | MB_TASKMODAL);
 }
 
 void derived::paintText(statWord stat, HDC hdc)
 {
 	bunnyStat* answer = statList->getStat(stat);
 
-	if (!answer)
+	if (answer->identifier == EMPTY)
 	{
 		callError(L"Empty pointer at derived::paintText");
 		return;

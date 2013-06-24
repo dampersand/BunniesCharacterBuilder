@@ -1,5 +1,6 @@
 #include "Advantages.h"
 
+
 advantages::advantages(messengerData &data)
 {
 	statList = &data;
@@ -13,6 +14,7 @@ advantages::advantages(messengerData &data)
 	addButton = 0;
 	removeButton = 0;
 	costBox = 0;
+	currentCostBox = 0;
 	paintFlag = FALSE;
 	createAdvantages();
 }
@@ -22,24 +24,27 @@ void advantages::createBoxes(HWND hwnd)
 	//temporary vars
 	int x = xStart;
 	int y = yStart + BOXHEIGHT; //factor in for size of paint
-	int dropHeight, dropLength, displayHeight, displayLength, displayX, displayY, describeHeight, describeLength, describeX, describeY, costX, costY;
+	int dropHeight, dropLength, displayHeight, displayLength, displayX, displayY, describeHeight, describeLength, describeX, describeY, costX, costY, currentCostX, currentCostY;
 	dropLength = 4*TAB;
 	dropHeight = 10*BOXHEIGHT;
 	describeX = x;
-	describeY = y + dropHeight + YSPACING;
+	describeY = y + dropHeight + 3*YSPACING;
 	describeLength = 4*TAB - BOXLENGTH - XSPACINGLONG;
 	describeHeight = 4*BOXHEIGHT;
 	displayX = x + dropLength + BOXLENGTH + 2*XSPACINGSHORT;
 	displayY = y;
 	displayLength = 3*TAB;
 	displayHeight = 15*BOXHEIGHT;
-	costX = describeX + describeLength + XSPACINGLONG;
+	costX = describeX + describeLength + XSPACINGSHORT;
 	costY = describeY;
+	currentCostX = displayX + displayLength + XSPACINGSHORT;
+	currentCostY = displayY;
 
 	bunnyStat* dummyStat = NULL;
 	//RECT mostRecentRectangle;
 
-	dropBox = CreateWindow(TEXT("LISTBOX"), L"", WS_CHILD | WS_VISIBLE | LBS_NOTIFY | WS_VSCROLL | WS_BORDER, x, y, dropLength, dropHeight, hwnd, (HMENU) ID_DROPBOX, NULL, NULL);
+	//create initial list of advantages box
+	dropBox = CreateWindow(TEXT("LISTBOX"), L"", WS_CHILD | WS_VISIBLE | LBS_NOTIFY  | WS_VSCROLL | WS_BORDER, x, y, dropLength, dropHeight, hwnd, (HMENU) ID_DROPBOX, NULL, NULL);
 
 	//populate list of advantages
 	SendMessage(dropBox, LB_ADDSTRING, NULL, (LPARAM) L"                  ------Advantages------"); //make this UI driven, dummy
@@ -61,19 +66,24 @@ void advantages::createBoxes(HWND hwnd)
 	//GetWindowRect(dropBox, &mostRecentRectangle); //this is a way to make it UI driven, but I need to do a DPI conversion.
 	costBox = CreateWindow(TEXT("EDIT"), L"0", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_READONLY | ES_CENTER, costX, costY, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
 
+	//add current cost box
+	//TODO: Make this UI driven in the future
+	currentCostBox = CreateWindow(TEXT("EDIT"), L"0", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_READONLY | ES_CENTER, currentCostX, currentCostY, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) 1, NULL, NULL);
+
 	//Add description box
 	//TODO: Make this UI driven in the future
 	describeBox = CreateWindow(TEXT("EDIT"), L"", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_READONLY | ES_MULTILINE, describeX, describeY, describeLength, describeHeight, hwnd, (HMENU) 1, NULL, NULL);
 
 	//Add selected advantages box
 	//TODO: Make this UI driven in the future
-	displayBox = CreateWindow(TEXT("LISTBOX"), L"", WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY | WS_VSCROLL | LBS_SORT, displayX, displayY, displayLength, displayHeight, hwnd, (HMENU) 1, NULL, NULL);
+	displayBox = CreateWindow(TEXT("LISTBOX"), L"", WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOTIFY | WS_VSCROLL | LBS_SORT, displayX, displayY, displayLength, displayHeight, hwnd, (HMENU) ID_DISPLAYBOX, NULL, NULL);
 
 	//Add + & - buttons
 	//TODO: Make this UI driven in the future
 	addButton = CreateWindow(TEXT("BUTTON"), TEXT("->"), WS_CHILD | WS_VISIBLE | WS_BORDER | BS_PUSHBUTTON, x + 4*TAB + XSPACINGSHORT, y + 4*BOXHEIGHT, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) ID_ADV_ADD, NULL, NULL);
 	removeButton = CreateWindow(TEXT("BUTTON"), TEXT("<-"), WS_CHILD | WS_VISIBLE | WS_BORDER | BS_PUSHBUTTON, x + 4*TAB + XSPACINGSHORT, y + 5*BOXHEIGHT + YSPACING, BOXLENGTH, BOXHEIGHT, hwnd, (HMENU) ID_ADV_REM, NULL, NULL);
-
+	Button_Enable(addButton, FALSE);
+	Button_Enable(removeButton, FALSE);
 }
 
 void advantages::createAdvantages()
@@ -135,7 +145,7 @@ void advantages::setAdvantage(statWord adv)
 		result = (int)SendMessage(displayBox,LB_GETITEMDATA, pos, NULL);
 		if (result == adv)
 		{
-			MessageBox(NULL, TEXT("Character already possesses that advantage/disadvantage!"), NULL, MB_OK);
+			MessageBox(NULL, TEXT("Character already possesses that advantage/disadvantage!"), NULL, MB_OK | MB_TASKMODAL);
 			return;
 		}
 	}
@@ -144,28 +154,80 @@ void advantages::setAdvantage(statWord adv)
 	bunnyStat* dummyStat = statList->getStat(adv, 1);
 	if (dummyStat->identifier == EMPTY)
 		return;
-	pos = SendMessage(displayBox, LB_ADDSTRING, NULL, (LPARAM) dummyStat->label.c_str());
+
+	//do any extra calculations for the advantage in question, and make sure user presses "OK"
+	if (!details.intro(dummyStat, statList, GetParent(dropBox)))
+		return;
+
+	//display the new advantage
+	std::wstring type;
+	type = dummyStat->label.c_str();
+	if (dummyStat->identifier == ATT)
+	{
+		switch (dummyStat->x)
+		{
+		case -3:
+			type += L": Hideous";
+			break;
+
+		case -2:
+			type += L": Ugly";
+			break;
+
+		case -1:
+			type += L": Unattractive";
+			break;
+
+		case 0:
+			type += L": Average";
+			break;
+
+		case 1:
+			type += L": Attractive";
+			break;
+
+		case 2:
+			type += L": Handsome";
+			break;
+
+		case 3:
+			type += L": Very handsome";
+			break;
+		}
+		pos = SendMessage(displayBox, LB_ADDSTRING, NULL, (LPARAM) type.c_str());
+	}
+	else
+		pos = SendMessage(displayBox, LB_ADDSTRING, NULL, (LPARAM) dummyStat->label.c_str());
 	SendMessage(displayBox, LB_SETITEMDATA, pos, dummyStat->identifier);
+
+	//change points based on cost of advantage
+	statList->changeStat(PT, -(dummyStat->y));
 }
 
 void advantages::unsetAdvantage(int position)
 {
-	/*if (SendMessage(displayBox, LB_GETCOUNT, NULL, NULL) == 0)
-	{
-		MessageBox(NULL, L"Nothing to remove!", NULL, MB_OK);
-		return;
-	}*/
+	int result = (int)SendMessage(displayBox, LB_GETITEMDATA, position, NULL);
+	bunnyStat* dummyStat = statList->getStat(result, TRUE);
 
 	SendMessage(displayBox, LB_DELETESTRING, position, NULL);
+	statList->changeStat(PT, dummyStat->y);
+	
+	//update removed stat
+	dummyStat->y = 0;
+	dummyStat->x = 0;
+	statList->editStat(dummyStat);
+
 }
 
 void advantages::selectAdvantage(statWord adv)
 {
-	bunnyStat* dummyStat = statList->getStat(adv, 0);
+	bunnyStat* dummyStat = statList->getStat(adv, TRUE);
 	levelDependency(adv);
 
 	SendMessage(describeBox, WM_SETTEXT, FALSE, (LPARAM) dummyStat->string.c_str());
 	SendMessage(costBox, WM_SETTEXT, FALSE, (LPARAM) std::to_wstring(dummyStat->amount).c_str());
+	SendMessage(currentCostBox, WM_SETTEXT, FALSE, (LPARAM) std::to_wstring(dummyStat->y).c_str());
+
 }
 
 void advantages::setStart(int x, int y)
@@ -184,7 +246,7 @@ int advantages::getYSize()
 	return ySize;
 }
 
-void advantages::engineReceiver(WORD identifier)
+void advantages::engineReceiver(WORD identifier, bool dependency)
 {
 	int pos;
 
@@ -201,9 +263,26 @@ void advantages::engineReceiver(WORD identifier)
 		break;
 
 	case ID_DROPBOX:
+		/*first deselect anything in displayBox*/
+		SendMessage(displayBox, LB_SETCURSEL, -1, NULL);
+
+		/*Now display what we're looking at in dropBox*/
 		pos = SendMessage(dropBox, LB_GETCURSEL, NULL, NULL);
 		selectAdvantage(SendMessage(dropBox, LB_GETITEMDATA, pos, NULL));
 		break;
+
+	case ID_DISPLAYBOX:
+		/*first deselect anything in dropBox*/
+		SendMessage(dropBox, LB_SETCURSEL, -1, NULL);
+
+		/*Now display what we're looking at in displayBox*/
+		pos = SendMessage(displayBox, LB_GETCURSEL, NULL, NULL);
+		selectAdvantage(SendMessage(displayBox, LB_GETITEMDATA, pos, NULL));
+		break;
+
+	case ID_TOGGLE_GENERAL:
+		toggleDisable(dependency);
+		return;
 
 	default:
 		break;
@@ -215,7 +294,7 @@ void advantages::paintText(HDC hdc)
 	//temp variables
 	RECT rectangle;
 	std::wstring text;
-	int x, y;
+	int x;
 	SIZE textSize;
 	POINT p; //make a point 0,0
 	HWND hWndParent;
@@ -239,6 +318,46 @@ void advantages::paintText(HDC hdc)
 	MapWindowPoints(displayBox, hWndParent, &p, 1);
 	x = (rectangle.right - rectangle.left - textSize.cx)/2;
 	TextOut(hdc, p.x + x, yStart, text.c_str(), text.length());
+
+	//create title of currentCostBox
+	//this is UI dependent!!
+	GetClientRect(currentCostBox, &rectangle);
+	text = L"Current";
+	GetTextExtentPoint32(hdc, text.c_str(), text.length(), &textSize);
+	hWndParent = GetParent(currentCostBox);
+	p.x = 0;
+	p.y = 0;
+	MapWindowPoints(currentCostBox, hWndParent, &p, 1);
+	x = (rectangle.right - rectangle.left - textSize.cx)/2;
+	TextOut(hdc, p.x + x, p.y - 2*textSize.cy, text.c_str(), text.length());
+	text = L"Cost";
+	GetTextExtentPoint32(hdc, text.c_str(), text.length(), &textSize);
+	x = (rectangle.right - rectangle.left - textSize.cx)/2;
+	TextOut(hdc, p.x + x, p.y - textSize.cy, text.c_str(), text.length());
+
+	//create title of describebox
+	//this is UI dependent!!
+	GetClientRect(describeBox, &rectangle);
+	text = L"Description";
+	GetTextExtentPoint32(hdc, text.c_str(), text.length(), &textSize);
+	hWndParent = GetParent(describeBox);
+	p.x = 0;
+	p.y = 0;
+	MapWindowPoints(describeBox, hWndParent, &p, 1);
+	x = (rectangle.right - rectangle.left - textSize.cx)/2;
+	TextOut(hdc, p.x + x, p.y - textSize.cy, text.c_str(), text.length());
+
+	//create title of costBox
+	//this is UI dependent!!
+	GetClientRect(costBox, &rectangle);
+	text = L"Cost";
+	GetTextExtentPoint32(hdc, text.c_str(), text.length(), &textSize);
+	hWndParent = GetParent(costBox);
+	p.x = 0;
+	p.y = 0;
+	MapWindowPoints(costBox, hWndParent, &p, 1);
+	x = (rectangle.right - rectangle.left - textSize.cx)/2;
+	TextOut(hdc, p.x + x, p.y - textSize.cy, text.c_str(), text.length());
 
 	//create optional "per level" flag
 	//this is UI dependent!!
@@ -290,4 +409,37 @@ void advantages::levelDependency(statWord adv)
 
 	if (paintFlag != original)
 		InvalidateRect(GetParent(describeBox), &rectangle, NULL);
+}
+
+void advantages::toggleDisable(bool dependency)
+{
+	if (dependency)
+	{
+		Button_Enable(addButton, TRUE);
+		Button_Enable(removeButton, TRUE);
+	}
+	else
+	{
+		Button_Enable(addButton, FALSE);
+		Button_Enable(removeButton, FALSE);
+	}
+}
+
+void advantages::resetAdvantages()
+{
+	int total = (int)SendMessage(displayBox, LB_GETCOUNT, NULL, NULL);
+	int pos;
+	int result;
+	bunnyStat* dummyStat;
+	for (pos = 0; pos <= total-1; pos++)
+	{
+		result = (int)SendMessage(displayBox,LB_GETITEMDATA, pos, NULL);
+		dummyStat = statList->getStat(result);
+		dummyStat->x = 0;
+		dummyStat->y = 0;
+	}
+
+	SendMessage(displayBox,LB_RESETCONTENT, NULL, NULL);
+	setAdvantage(EHS);
+	setAdvantage(PPV);
 }

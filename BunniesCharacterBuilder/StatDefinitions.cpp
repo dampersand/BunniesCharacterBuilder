@@ -122,7 +122,7 @@ bunnyStat* messengerData::getStat(statWord stat, bool suppressErrorMessage)
 			std::wstring appendMsg = std::to_wstring(stat);
 			errorMsg.append(appendMsg);
 			if (!suppressErrorMessage)
-				MessageBox(NULL, errorMsg.c_str(), NULL, MB_OK);
+				MessageBox(NULL, errorMsg.c_str(), NULL, MB_OK | MB_TASKMODAL);
 			return getStat(EMPTY);
 		}
 	}
@@ -144,7 +144,7 @@ bool messengerData::changeStat(statWord stat, int addMe)
 		return FALSE; //couldn't find stat to change
 	dummyStat->amount += addMe;
 	dummyStat->string = std::to_wstring(dummyStat->amount);
-	SendMessage(dummyStat->hwnd,WM_SETTEXT,FALSE,(LPARAM) dummyStat->string.c_str());
+	dummyStat->updateStat();
 	return TRUE;
 }
 
@@ -158,6 +158,7 @@ bool messengerData::changeStat(statWord stat, std::wstring newString)
 	SendMessage(dummyStat->hwnd,WM_SETTEXT,FALSE,(LPARAM) dummyStat->string.c_str());
 	return TRUE;
 }
+
 
 //tested, working
 void messengerData::changeStatLocation(statWord stat, int x, int y)
@@ -196,6 +197,7 @@ void messengerData::editStat(statWord stat, int am, int X, int Y, std::wstring l
 	dummyStat->hwnd = hwnd;
 	dummyStat->addButton = add;
 	dummyStat->subtractButton = sub;
+	SendMessage(dummyStat->hwnd,WM_SETTEXT,FALSE,(LPARAM) dummyStat->string.c_str());
 }
 
 //tested, working

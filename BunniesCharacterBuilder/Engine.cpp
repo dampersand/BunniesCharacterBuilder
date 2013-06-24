@@ -6,7 +6,9 @@ Engine::Engine() : general(data), derivedStats(data), bigFour(data), advantageSt
 	UIx = INITIALDISTANCE;
 	UIy = INITIALDISTANCE;
 	column1Width = INITIALDISTANCE;
-	data.makeNewStat(EMPTY,0,0,0,L"EMPTY", L"0",0,0,0); //empty stat
+	points = 0;
+	age = 0;
+	data.makeNewStat(EMPTY,0,0,0,L"EMPTY", L"",0,0,0); //empty stat
 
 	/*suppress those annoying error messages in the beginning, at least until skills get coded.*/
 	data.makeNewStat(BF,0,0,0,L"EMPTY",L"0",0,0,0);
@@ -16,7 +18,7 @@ Engine::Engine() : general(data), derivedStats(data), bigFour(data), advantageSt
 	
 }
 
-int Engine::buttonRouter(WPARAM wParam) //helper functions are for suckers.
+int Engine::buttonRouter(WPARAM wParam)//helper functions are for suckers.
 {
 	switch(LOWORD(wParam))
 	{
@@ -34,29 +36,34 @@ int Engine::buttonRouter(WPARAM wParam) //helper functions are for suckers.
 		break;
 
 	case ID_TOGGLE_GENERAL: //if the general toggle button made the call
-		general.engineReceiver(LOWORD(wParam), !bigFour.isCommitted()); //send the call to the general stats along with dependency information
-		bigFour.engineReceiver(LOWORD(wParam), general.isCommitted()); //notify main stats that a predecessor has locked in.
-		break;
 
-
-	case ID_TOGGLE_BASE: //if the base toggle button made the call
-		bigFour.engineReceiver(LOWORD(wParam), general.isCommitted()); //send the call to the base stats along with dependency information
-		general.engineReceiver(LOWORD(wParam), !bigFour.isCommitted()); //notify general stats that a dependent has locked in.
-
-		if (bigFour.isCommitted()) //update messengerData and recalculate/display derived stats
+		if (general.isCommitted())
 		{
-			derivedStats.recalculateAll();
+			int result = MessageBox(NULL, L"Unlocking these stats MAY clear any work you've done (depending on the changes you make).  Continue?", L"Note", MB_YESNO | MB_TASKMODAL);
+			if (result == 7)
+				break;
+			recordDependency();
 		}
+
+		general.engineReceiver(LOWORD(wParam)); //send the call to the general stats
+		if (!checkDependency() && general.isCommitted()) //if the user changed the age or points
+		{
+			bigFour.resetStats();
+			advantageStats.resetAdvantages();
+		}
+		bigFour.engineReceiver(LOWORD(wParam), general.isCommitted()); //notify main stats that a predecessor has locked in.
+		advantageStats.engineReceiver(LOWORD(wParam), general.isCommitted()); //notify advantages that a predecessor has locked in
 		break;
+
 
 	case ID_ADV_ADD: //if the add advantage button made the call
 	case ID_ADV_REM:
 	case ID_DROPBOX: //if the dropbox made the call
-		advantageStats.engineReceiver(LOWORD(wParam));
+		advantageStats.engineReceiver(LOWORD(wParam), general.isCommitted());
 		break;
 
 	default:
-		MessageBox(NULL, L"Unrecognized word", NULL, MB_OK);
+		MessageBox(NULL, L"Unrecognized word", NULL, MB_OK | MB_TASKMODAL);
 		return -1; //handle an error here
 	}
 	return 0;
@@ -67,7 +74,11 @@ int Engine::boxRouter(WPARAM wParam) //helper functions are for suckers.
 	switch(LOWORD(wParam))
 	{
 	case ID_DROPBOX: //if the dropbox made the call
-		advantageStats.engineReceiver(LOWORD(wParam));
+		advantageStats.engineReceiver(LOWORD(wParam), general.isCommitted());
+		break;
+
+	case ID_DISPLAYBOX:
+		advantageStats.engineReceiver(LOWORD(wParam), general.isCommitted());
 		break;
 
 	default:
@@ -125,4 +136,18 @@ void Engine::paintAdvantages(HDC hdc)
 void Engine::determineWidth()
 {
 	column1Width = max(general.getXSize(), max(bigFour.getXSize(), derivedStats.getXSize()));
+}
+
+void Engine::recordDependency()
+{
+	points = data.getStat(PT)->amount;
+	age = data.getStat(AG)->amount;
+}
+
+bool Engine::checkDependency()
+{
+	if ((points == data.getStat(PT)->amount) && (age == data.getStat(AG)->amount))
+		return TRUE;
+	else
+		return FALSE;
 }

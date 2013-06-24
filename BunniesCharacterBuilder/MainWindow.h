@@ -13,7 +13,7 @@ class MainWindow : public BaseWindow<MainWindow>
 public:
 
 	//required by BaseWindow abstract class
-    PCWSTR  ClassName() const { return L"Circle Window Class"; }
+    PCWSTR  ClassName() const { return L"Bunnies Character Builder"; }
     LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	Engine engine;

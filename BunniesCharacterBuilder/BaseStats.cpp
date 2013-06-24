@@ -15,7 +15,6 @@ baseStats::baseStats(messengerData &data) //constructor
 	xStart = 0;
 	yStart = 0;
 
-	committed = FALSE;
 	disabled = TRUE;
 }
 
@@ -58,6 +57,22 @@ int baseStats::changeStat(statWord stat, int addMe) //returns number of points u
 int baseStats::changeStat(statWord stat, int amount, int modifier) //returns -1 on poorly requested stat, 0 otherwise.
 {
 	return baseStats::changeStat(stat, amount*modifier);
+}
+
+void baseStats::resetStats()
+{
+	resetOneStat(ST);
+	resetOneStat(IQ);
+	resetOneStat(DX);
+	resetOneStat(HT);
+}
+
+void baseStats::resetOneStat(statWord stat)
+{
+	bunnyStat* answer = statList->getStat(stat);
+	answer->amount = 10;
+	answer->string = L"10";
+	answer->updateStat();
 }
 
 int baseStats::getXSize()
@@ -116,8 +131,6 @@ void baseStats::createButtons(HWND hwnd)
 	createOneButton(HT, hwnd, ID_HT_ADD, ID_HT_SUB);
 
 	xSize += XSPACINGLONG + XSPACINGSHORT + 2*BOXLENGTH; //new buttons are this long... consider rewriting to be more UI dependent
-
-	createToggleButton(hwnd, xSize, statList->getStat(HT)->y - YSPACING);
 }
 
 void baseStats::createOneButton(statWord stat, HWND hwnd, buttonID idUp, buttonID idDown)
@@ -140,12 +153,6 @@ void baseStats::createOneButton(statWord stat, HWND hwnd, buttonID idUp, buttonI
 	statList->editStat(ptr);
 }
 
-void baseStats::createToggleButton(HWND hwnd, int x, int y)
-{
-	disableButton = CreateWindow(TEXT("BUTTON"), TEXT("DISABLED"), WS_VISIBLE | WS_CHILD | WS_BORDER | BS_PUSHBUTTON, x + 1.5*XSPACINGLONG, y - BOXHEIGHT, 2*LONGBOXLENGTH, 2*BOXHEIGHT, hwnd, (HMENU) ID_TOGGLE_BASE, NULL, NULL);
-	Button_Enable(disableButton, FALSE);
-	xSize += 1.5*XSPACINGLONG + 2*LONGBOXLENGTH;
-}
 
 void baseStats::paintAll(HDC hdc)
 {
@@ -173,7 +180,7 @@ void baseStats::paintText(statWord stat, HDC hdc)
 
 void baseStats::callError(std::wstring info)
 {
-	MessageBox(NULL, info.c_str(), NULL, MB_OK);
+	MessageBox(NULL, info.c_str(), NULL, MB_OK | MB_TASKMODAL);
 	MessageBox(NULL, L"The program may continue, but check anything dependent on the base stats for errors.", NULL, MB_OK);
 }
 
@@ -216,9 +223,7 @@ void baseStats::engineReceiver(WORD identifier, bool dependency)
 	case ID_TOGGLE_GENERAL:
 		toggleDisable(dependency);
 		return;
-	case ID_TOGGLE_BASE:
-		toggleCommit();
-		return;
+
 
 	default:
 		return;
@@ -231,41 +236,11 @@ void baseStats::engineReceiver(WORD identifier, bool dependency)
 
 }
 
-void baseStats::toggleCommit()
-{
-	if (disabled) //insurance policy, should never get hit unless coding error
-	{
-		callError(L"Cannot lock until dependencies are locked");
-		return;
-	}
-
-	if (committed)
-	{
-		committed = FALSE;
-		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Lock Stats");
-		setStatButtonState(ST, !committed);
-		setStatButtonState(IQ, !committed);
-		setStatButtonState(DX, !committed);
-		setStatButtonState(HT, !committed);
-	}
-
-	else
-	{
-		committed = TRUE;
-		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Unlock");
-		setStatButtonState(ST, !committed);
-		setStatButtonState(IQ, !committed);
-		setStatButtonState(DX, !committed);
-		setStatButtonState(HT, !committed);
-	}
-}
 
 void baseStats::toggleDisable(bool dependency)
 {
 	if (dependency)
 	{
-		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Lock Stats");
-		Button_Enable(disableButton, TRUE);
 		disabled = FALSE;
 		setStatButtonState(ST, !disabled);
 		setStatButtonState(IQ, !disabled);
@@ -274,8 +249,6 @@ void baseStats::toggleDisable(bool dependency)
 	}
 	else
 	{
-		Button_Enable(disableButton, FALSE);
-		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"DISABLED");
 		disabled = TRUE;
 		setStatButtonState(ST, !disabled);
 		setStatButtonState(IQ, !disabled);
@@ -284,10 +257,6 @@ void baseStats::toggleDisable(bool dependency)
 	}
 }
 
-bool baseStats::isCommitted()
-{
-	return committed;
-}
 
 int baseStats::getPointChange(int initialStat, int direction)
 {

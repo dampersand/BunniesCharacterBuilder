@@ -19,6 +19,7 @@ class Engine
 
 	int UIx, UIy;
 	int column1Width;
+	int age, points;
 
 public:
 	Engine();
@@ -36,6 +37,9 @@ public:
 	void paintAdvantages(HDC hdc);
 
 	void determineWidth();
+
+	void recordDependency();
+	bool checkDependency();
 };
 
 #endif //__ENGINE_H guard word

@@ -79,6 +79,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Advantages.h" />
+    <ClInclude Include="AdvCalc.h" />
     <ClInclude Include="BaseStats.h" />
     <ClInclude Include="DerivedStats.h" />
     <ClInclude Include="Engine.h" />
@@ -90,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Advantages.cpp" />
+    <ClCompile Include="AdvCalc.cpp" />
     <ClCompile Include="BaseStats.cpp" />
     <ClCompile Include="DerivedStats.cpp" />
     <ClCompile Include="Engine.cpp" />

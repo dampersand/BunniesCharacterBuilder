@@ -88,7 +88,7 @@ void generalInfo::createButton(HWND hwnd, int x, int y)
 
 void generalInfo::callError(std::wstring function)
 {
-	MessageBox(NULL, function.c_str(), NULL, MB_OK);
+	MessageBox(NULL, function.c_str(), NULL, MB_OK | MB_TASKMODAL);
 }
 
 void generalInfo::paintAll(HDC hdc)
@@ -125,17 +125,14 @@ int generalInfo::getYSize()
 	return ySize;
 }
 
-void generalInfo::engineReceiver(WORD identifier, bool dependency)
+void generalInfo::engineReceiver(WORD identifier)
 {
 	switch(identifier)
 	{
 	case ID_TOGGLE_GENERAL:
-		if (dependency)
-			toggleCommit();
+		toggleCommit();
 		break;
-	case ID_TOGGLE_BASE:
-		toggleDisable(dependency);
-		break;
+
 	}
 }
 
@@ -150,7 +147,7 @@ void generalInfo::toggleCommit()
 	{
 		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Lock");
 		SendMessage(statList->getStat(AG)->hwnd,EM_SETREADONLY,FALSE,NULL);
-		SendMessage(statList->getStat(NM)->hwnd, EM_SETREADONLY,FALSE,NULL);
+		//SendMessage(statList->getStat(NM)->hwnd, EM_SETREADONLY,FALSE,NULL);
 		SendMessage(statList->getStat(PT)->hwnd, EM_SETREADONLY,FALSE,NULL);
 		committed = FALSE;
 	}
@@ -161,7 +158,7 @@ void generalInfo::toggleCommit()
 		commitStat(PT);
 		SendMessage(disableButton,WM_SETTEXT,FALSE,(LPARAM) L"Unlock");
 		SendMessage(statList->getStat(AG)->hwnd,EM_SETREADONLY,TRUE,NULL);
-		SendMessage(statList->getStat(NM)->hwnd, EM_SETREADONLY,TRUE,NULL);
+		//SendMessage(statList->getStat(NM)->hwnd, EM_SETREADONLY,TRUE,NULL);
 		SendMessage(statList->getStat(PT)->hwnd, EM_SETREADONLY,TRUE,NULL);
 		committed = TRUE;
 	}

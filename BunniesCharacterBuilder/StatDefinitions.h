@@ -7,8 +7,8 @@ typedef unsigned int statWord;
 
 struct bunnyStat
 {
-	int amount, x, y; //amount/cost of a stat and the stat's x and y location
-	std::wstring label, string;
+	int amount, x, y; //amount of a stat and the stat's x and y location for regular stats OR cost of a stat and extra variables for advantages
+	std::wstring label, string; //stat's label, descriptive string, and type of 
 	statWord identifier;
 	HWND hwnd, addButton, subtractButton; //handle to display box and buttons.  Leave buttons uninitialized for non base stats.
 	bunnyStat *next, *prev;
@@ -55,6 +55,11 @@ public:
 #define LONGBOXLENGTH 40
 #define INITIALDISTANCE 10
 
+#define CALCWINDOWSIZEX 400
+#define CALCWINDOWSIZEY 300
+#define CALCWINDOWLOCX 600
+#define CALCWINDOWLOCY 120
+
 //statWords - hopefully this will be file-driven in the future.
 #define EMPTY 100 //an empty stat
 #define ST 101
@@ -92,7 +97,7 @@ public:
 #define CLI 211 //clerical investment lolwut bunnies
 #define CBR 212 //combat reflexes
 #define CNS 213 //common sense
-#define CMP 214 //compoed
+#define CMP 214 //composed
 #define DGS 215 //danger sense
 #define DOJ 216 //double jointed
 //eidectic memory not allowed in bunnies games
@@ -149,7 +154,10 @@ typedef unsigned int buttonID;
 
 //utility button IDs
 #define ID_TOGGLE_GENERAL 401
-#define ID_TOGGLE_BASE 402
+#define ID_CALC_OK 402
+#define ID_CALC_CANCEL 403
+#define ID_CALC_PLUS 404
+#define ID_CALC_MINUS 405
 
 //skillwords
 #define BF 501 //bunFu
@@ -159,5 +167,6 @@ typedef unsigned int buttonID;
 typedef unsigned int boxID;
 //box IDs
 #define ID_DROPBOX 601
+#define ID_DISPLAYBOX 602
 
 #endif //_STAT_DEFINITIONS_H guard word

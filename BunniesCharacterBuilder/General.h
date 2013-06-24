@@ -42,7 +42,7 @@ public:
 
 	/*Engine Member Functions*/
 	int addStat(statWord stat, int newStat);
-	void engineReceiver(WORD identifier, bool dependency); //if dependency is false, user has a dependent open.
+	void engineReceiver(WORD identifier);
 	bool isCommitted();
 
 };
